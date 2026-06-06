@@ -1,20 +1,71 @@
 # Python
 __pycache__/
 *.py[cod]
-*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
 venv/
 .venv/
-*.egg-info/
+ENV/
+env/
 
 # chrony log data (machine-specific, not for version control)
 tools/chrony_statistics.log
 *.log
+logs/
 
-# OS
-.DS_Store
-Thumbs.db
+# Ansible
+*.retry
 
 # SSH keys / secrets
 *.pem
 *.key
+*.vault
+*.vault_pass.txt
 chrony.keys
+keys/
+
+# Environment files
+.env
+.env.*
+
+# Temporary / editor files
+*.swp
+*.bak
+*.tmp
+*.orig
+*.old
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Test coverage
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+
+# Pipenv / Poetry
+Pipfile.lock
+poetry.lock
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.VolumeIcon.icns
+com.apple.timemachine.donotpresent
+com.apple.metadata:*
+
+# Windows
+Thumbs.db
