@@ -50,6 +50,9 @@ dtoverlay=dwc2,dr_mode=host
 
 [all]
 # GPS PPS signal on GPIO 18 → /dev/pps0
+# Note: capture_clear is intentionally omitted — timestamps the rising edge (default),
+# which is the precise 1-second UTC epoch marker from the NEO-M8T.
+# The Waveshare wiki suggests adding capture_clear (falling edge) but this is less accurate.
 dtoverlay=pps-gpio,gpiopin=18
 
 # Enable UART0 for GPS serial (Waveshare NEO-M8T HAT → /dev/ttyAMA0)
