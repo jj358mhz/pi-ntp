@@ -107,14 +107,26 @@ Remove it if present. The line should look like:
 console=tty1 root=PARTUUID=2fa0ed8f-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=US
 ```
 
-### 4. Install Packages
+### 4. udev Rule — GPS Baud Rate
+
+The NEO-M8T defaults to 9600 baud but is configured here at 115200. A udev rule ensures
+the baud rate is set correctly when the device is added at boot:
+
+```bash
+sudo cp config/99-gps-baud.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules
+```
+
+See [`config/99-gps-baud.rules`](config/99-gps-baud.rules).
+
+### 5. Install Packages
 
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y chrony gpsd gpsd-clients gpsd-tools pps-tools
 ```
 
-### 5. Configure gpsd (`/etc/default/gpsd`)
+### 6. Configure gpsd (`/etc/default/gpsd`)
 
 ```bash
 DEVICES="/dev/ttyAMA0 /dev/pps0"
@@ -146,7 +158,7 @@ Verify PPS is firing:
 sudo ppstest /dev/pps0
 ```
 
-### 6. Configure chrony (`/etc/chrony/chrony.conf`)
+### 7. Configure chrony (`/etc/chrony/chrony.conf`)
 
 See [`config/chrony.conf`](config/chrony.conf) for the full annotated config.
 
@@ -164,7 +176,7 @@ sudo systemctl enable chrony
 sudo systemctl restart chrony
 ```
 
-### 7. Verify
+### 8. Verify
 
 ```bash
 # Check sources — look for #* next to PPS
@@ -187,9 +199,10 @@ sudo chronyc serverstats
 ```
 ├── README.md
 ├── config/
+│   ├── 99-gps-baud.rules           # /etc/udev/rules.d/ — sets ttyAMA0 to 115200 baud
 │   ├── cmdline.txt                 # /boot/firmware/cmdline.txt (serial console removed)
-│   ├── config.txt                  # Full /boot/firmware/config.txt
-│   ├── chrony.conf                 # Full chrony configuration
+│   ├── config.txt                  # /boot/firmware/config.txt
+│   ├── chrony.conf                 # /etc/chrony/chrony.conf
 │   └── gpsd                        # /etc/default/gpsd
 ├── scripts/
 │   └── up                          # System update helper script

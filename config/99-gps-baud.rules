@@ -1,0 +1,4 @@
+# /etc/udev/rules.d/99-gps-baud.rules
+# Set baud rate on ttyAMA0 to 115200 when the device is added.
+# Required for the Waveshare NEO-M8T GNSS Timing HAT which defaults to 9600 baud.
+ACTION=="add", KERNEL=="ttyAMA0", RUN+="/bin/stty -F /dev/ttyAMA0 115200"
