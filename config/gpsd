@@ -1,0 +1,20 @@
+# /etc/default/gpsd
+# Configuration for gpsd on raspberrypi-ntp
+
+# GPS devices to start with gpsd at boot.
+# ttyAMA0 = UART0 (serial0) — NMEA sentences from GPS module
+# pps0    = PPS device on GPIO 18
+DEVICES="/dev/ttyAMA0 /dev/pps0"
+
+# -n: Start reading from devices immediately, even if no clients are connected.
+#     Required so chrony gets GPS data at boot without waiting for a gpsd client.
+GPSD_OPTIONS="-n"
+
+# Start the gpsd daemon automatically at boot.
+START_DAEMON="true"
+
+# Automatically detect USB GPS devices when plugged in.
+USBAUTO="true"
+
+# Baud rate for serial GPS module
+BAUDRATE="115200"

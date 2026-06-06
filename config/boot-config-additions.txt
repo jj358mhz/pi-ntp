@@ -1,0 +1,21 @@
+# Additions to /boot/firmware/config.txt for GPS-disciplined NTP
+#
+# Add these lines under the [all] section at the bottom of the file.
+# The full file is managed by Raspberry Pi OS — only these lines were added.
+
+[all]
+
+# GPS PPS signal — tells the kernel to expect a 1Hz pulse on GPIO 18
+# and expose it as /dev/pps0
+dtoverlay=pps-gpio,gpiopin=18
+
+# Enable UART0 for GPS serial communication via /dev/ttyAMA0 (serial0)
+# Also ensure the serial console is REMOVED from /boot/firmware/cmdline.txt
+# so the GPS module has exclusive use of the UART
+enable_uart=1
+init_uart_baud=115200
+dtparam=uart0=on
+
+# Charge the Raspberry Pi 5 onboard RTC battery at 3V constant voltage
+# Allows the RTC to maintain time across power cycles even without GPS lock
+dtparam=rtc_bbat_vchg=3000000

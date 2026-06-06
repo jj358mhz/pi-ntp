@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# chrony log data (machine-specific, not for version control)
+tools/chrony_statistics.log
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SSH keys / secrets
+*.pem
+*.key
+chrony.keys
