@@ -96,10 +96,15 @@ See [`config/config.txt`](config/config.txt) for the full annotated file.
 
 ### 3. Disable Serial Console
 
-Edit `/boot/firmware/cmdline.txt` and remove `console=serial0,115200` if present,
-so the UART is free for the GPS module. The line should look like:
+The UART serial console (`console=serial0,115200`) must be absent from `/boot/firmware/cmdline.txt`
+so the GPS module has exclusive use of the UART. This is already the case on this build — see
+[`config/cmdline.txt`](config/cmdline.txt).
 
-```console=tty1 root=PARTUUID=... rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=US
+If setting up from scratch, check that your `cmdline.txt` does **not** contain `console=serial0,115200`.
+Remove it if present. The line should look like:
+
+```
+console=tty1 root=PARTUUID=2fa0ed8f-02 rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=US
 ```
 
 ### 4. Install Packages
@@ -182,6 +187,7 @@ sudo chronyc serverstats
 ```
 ├── README.md
 ├── config/
+│   ├── cmdline.txt                 # /boot/firmware/cmdline.txt (serial console removed)
 │   ├── config.txt                  # Full /boot/firmware/config.txt
 │   ├── chrony.conf                 # Full chrony configuration
 │   └── gpsd                        # /etc/default/gpsd
