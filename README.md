@@ -11,14 +11,16 @@ by: https://austinsnerdythings.com/2025/02/14/revisiting-microsecond-accurate-nt
 
 ## Hardware
 
-| Component      | Details                                                 |
-|----------------|---------------------------------------------------------|
-| Board          | Raspberry Pi 5                                          |
-| OS             | Debian GNU/Linux 12 (Bookworm), kernel 6.12 aarch64     |
-| GPS Module     | u-blox (model TBD)                                      |
-| GPS Connection | UART via `/dev/ttyAMA0` (serial0), 115200 baud          |
-| PPS Signal     | GPIO 18 → `/dev/pps0`                                   |
-| IP Address     | 192.168.123.123 (static, assigned via DHCP reservation) |
+| Component           | Details                                                                                     |
+|---------------------|---------------------------------------------------------------------------------------------|
+| Board               | Raspberry Pi 5                                                                              |
+| OS                  | Debian GNU/Linux 12 (Bookworm), kernel 6.12 aarch64                                         |
+| GPS Module          | [Waveshare NEO-M8T GNSS Timing HAT](https://www.waveshare.com/wiki/NEO-M8T_GNSS_TIMING_HAT) |
+| GNSS Constellations | GPS, BeiDou, Galileo, GLONASS (concurrent, up to 3)                                         |
+| GPS Connection      | UART via `/dev/ttyAMA0` (serial0), 115200 baud                                              |
+| PPS Signal          | GPIO 18 → `/dev/pps0`                                                                       |
+| Backup Battery      | ML1220 rechargeable cell (preserves ephemeris for hot starts)                               |
+| IP Address          | 192.168.123.123 (static, assigned via DHCP reservation)                                     |
 
 ---
 
@@ -74,7 +76,8 @@ Enable SSH and set hostname to `raspberrypi-ntp` in the Imager advanced settings
 
 ### 2. Boot Config (`/boot/firmware/config.txt`)
 
-Add the following under the `[all]` section:
+The GPS-relevant additions are under the `[all]` section at the bottom. Copy [`config/config.txt`](config/config.txt) to
+`/boot/firmware/config.txt`, or manually add:
 
 ```ini
 # GPS PPS signal on GPIO 18
@@ -89,15 +92,14 @@ dtparam=uart0=on
 dtparam=rtc_bbat_vchg=3000000
 ```
 
-See [`config/boot-config-additions.txt`](config/boot-config-additions.txt) for the full annotated snippet.
+See [`config/config.txt`](config/config.txt) for the full annotated file.
 
 ### 3. Disable Serial Console
 
 Edit `/boot/firmware/cmdline.txt` and remove `console=serial0,115200` if present,
 so the UART is free for the GPS module. The line should look like:
 
-```
-console=tty1 root=PARTUUID=... rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=US
+```console=tty1 root=PARTUUID=... rootfstype=ext4 fsck.repair=yes rootwait cfg80211.ieee80211_regdom=US
 ```
 
 ### 4. Install Packages
@@ -180,7 +182,7 @@ sudo chronyc serverstats
 ```
 ├── README.md
 ├── config/
-│   ├── boot-config-additions.txt   # GPS/UART/PPS additions for /boot/firmware/config.txt
+│   ├── config.txt                  # Full /boot/firmware/config.txt
 │   ├── chrony.conf                 # Full chrony configuration
 │   └── gpsd                        # /etc/default/gpsd
 ├── scripts/
