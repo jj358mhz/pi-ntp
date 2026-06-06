@@ -4,20 +4,21 @@ A GPS-disciplined, stratum 1 NTP server built on a Raspberry Pi 5 running Debian
 Uses a u-blox GPS module (model TBD) connected via UART, with a PPS signal on GPIO 18,
 feeding [chrony](https://chrony-project.org/) for sub-microsecond time accuracy on the local network.
 
-Inspired by: https://austinsnerdythings.com/2025/02/14/revisiting-microsecond-accurate-ntp-for-raspberry-pi-with-gps-pps-in-2025/
+Inspired
+by: https://austinsnerdythings.com/2025/02/14/revisiting-microsecond-accurate-ntp-for-raspberry-pi-with-gps-pps-in-2025/
 
 ---
 
 ## Hardware
 
-| Component | Details |
-|-----------|---------|
-| Board | Raspberry Pi 5 |
-| OS | Debian GNU/Linux 12 (Bookworm), kernel 6.12 aarch64 |
-| GPS Module | u-blox (model TBD) |
-| GPS Connection | UART via `/dev/ttyAMA0` (serial0), 115200 baud |
-| PPS Signal | GPIO 18 → `/dev/pps0` |
-| IP Address | 192.168.123.123 (static, assigned via DHCP reservation) |
+| Component      | Details                                                 |
+|----------------|---------------------------------------------------------|
+| Board          | Raspberry Pi 5                                          |
+| OS             | Debian GNU/Linux 12 (Bookworm), kernel 6.12 aarch64     |
+| GPS Module     | u-blox (model TBD)                                      |
+| GPS Connection | UART via `/dev/ttyAMA0` (serial0), 115200 baud          |
+| PPS Signal     | GPIO 18 → `/dev/pps0`                                   |
+| IP Address     | 192.168.123.123 (static, assigned via DHCP reservation) |
 
 ---
 
@@ -177,7 +178,6 @@ sudo chronyc serverstats
 ## Files in This Repo
 
 ```
-raspberrypi-ntp/
 ├── README.md
 ├── config/
 │   ├── boot-config-additions.txt   # GPS/UART/PPS additions for /boot/firmware/config.txt
