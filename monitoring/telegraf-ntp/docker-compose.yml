@@ -1,0 +1,12 @@
+services:
+  telegraf:
+    image: telegraf:latest
+    container_name: telegraf
+    restart: unless-stopped
+    # network_mode: host is required so Telegraf can reach chronyd
+    # on udp://127.0.0.1:323 and InfluxDB on the host network
+    network_mode: host
+    volumes:
+      - /opt/docker/stacks/telegraf-ntp/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+    environment:
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
