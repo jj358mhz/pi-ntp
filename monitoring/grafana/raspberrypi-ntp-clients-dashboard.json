@@ -5,8 +5,8 @@
     "name": "raspberrypi-ntp-clients-v2",
     "namespace": "default",
     "uid": "d93ebe1d-14d2-4702-830e-999d2fb81421",
-    "resourceVersion": "1780897169687019",
-    "generation": 13,
+    "resourceVersion": "1780897732589015",
+    "generation": 14,
     "creationTimestamp": "2026-06-08T01:00:26Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "1139578907697152"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "",
       "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)",
       "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-08T05:39:29Z"
+      "grafana.app/updatedTimestamp": "2026-06-08T05:48:52Z"
     }
   },
   "spec": {
@@ -708,7 +708,21 @@
                     }
                   }
                 },
-                "overrides": []
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byRegexp",
+                      "scope": "series",
+                      "options": ".*client=\"([^\"]+)\".*"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "${__field.labels.client}"
+                      }
+                    ]
+                  }
+                ]
               }
             }
           }
