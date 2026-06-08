@@ -122,6 +122,11 @@ Dashboards → New → Import → Upload JSON file:
 - [`grafana/raspberrypi-ntp-dashboard.json`](grafana/raspberrypi-ntp-dashboard.json) — NTP server metrics
 - [`grafana/raspberrypi-ntp-clients-dashboard.json`](grafana/raspberrypi-ntp-clients-dashboard.json) — client monitoring
 
+**Note on dashboard JSON format:**
+- `raspberrypi-ntp-dashboard.json` uses the Grafana v13 API format (`dashboard.grafana.app/v2`) and requires **Grafana v13+**
+- The datasource is referenced by internal ID (`efodpma1sz474d`) — if importing on a different Grafana instance, edit the JSON and replace all occurrences of `efodpma1sz474d` with your own InfluxDB datasource name
+- `raspberrypi-ntp-clients-dashboard.json` uses the classic format and works on Grafana v10+
+
 ---
 
 ## Files
@@ -149,44 +154,44 @@ monitoring/
 
 ### `chrony` measurement (tracking)
 
-| Field             | Unit    | Description                         |
-|-------------------|---------|-------------------------------------|
-| `system_time`     | seconds | Current clock offset from NTP time  |
-| `last_offset`     | seconds | Offset of the last clock update     |
-| `rms_offset`      | seconds | Long-term RMS average of offsets    |
-| `frequency`       | ppm     | Clock frequency error               |
-| `residual_freq`   | ppm     | Residual frequency after correction |
-| `skew`            | ppm     | Estimated error in frequency        |
-| `root_delay`      | seconds | Network delay to reference          |
+| Field | Unit | Description |
+|-------|------|-------------|
+| `system_time` | seconds | Current clock offset from NTP time |
+| `last_offset` | seconds | Offset of the last clock update |
+| `rms_offset` | seconds | Long-term RMS average of offsets |
+| `frequency` | ppm | Clock frequency error |
+| `residual_freq` | ppm | Residual frequency after correction |
+| `skew` | ppm | Estimated error in frequency |
+| `root_delay` | seconds | Network delay to reference |
 | `root_dispersion` | seconds | Dispersion accumulated to reference |
-| `update_interval` | seconds | Interval between clock updates      |
+| `update_interval` | seconds | Interval between clock updates |
 
 Tags: `host`, `leap_status`, `reference_id`, `stratum`
 
 ### `chrony_sources` measurement (per-source)
 
-| Field                      | Unit          | Description                                         |
-|----------------------------|---------------|-----------------------------------------------------|
-| `latest_measurement`       | seconds       | Most recent offset measurement                      |
-| `latest_measurement_error` | seconds       | Error of most recent measurement                    |
-| `reachability`             | octal (0-255) | 8-poll reachability register; 255 = fully reachable |
-| `poll`                     | log2(seconds) | Current polling interval                            |
-| `sample`                   | integer       | Number of samples in filter                         |
+| Field | Unit | Description |
+|-------|------|-------------|
+| `latest_measurement` | seconds | Most recent offset measurement |
+| `latest_measurement_error` | seconds | Error of most recent measurement |
+| `reachability` | octal (0-255) | 8-poll reachability register; 255 = fully reachable |
+| `poll` | log2(seconds) | Current polling interval |
+| `sample` | integer | Number of samples in filter |
 
 Tags: `host`, `peer`, `mode`, `state`, `stratum`
 
 ### `chrony_sourcestats` measurement (per-source statistics)
 
-| Field                | Unit    | Description                          |
-|----------------------|---------|--------------------------------------|
-| `offset`             | seconds | Estimated offset of source           |
-| `offset_error`       | seconds | Error bound on offset estimate       |
-| `residual_frequency` | ppm     | Residual frequency after regression  |
-| `skew`               | ppm     | Estimated skew of source frequency   |
-| `stddev`             | seconds | Standard deviation of offset samples |
-| `samples`            | integer | Number of samples in regression      |
-| `runs`               | integer | Runs of same-sign residuals          |
-| `span_seconds`       | seconds | Time span of sample set              |
+| Field | Unit | Description |
+|-------|------|-------------|
+| `offset` | seconds | Estimated offset of source |
+| `offset_error` | seconds | Error bound on offset estimate |
+| `residual_frequency` | ppm | Residual frequency after regression |
+| `skew` | ppm | Estimated skew of source frequency |
+| `stddev` | seconds | Standard deviation of offset samples |
+| `samples` | integer | Number of samples in regression |
+| `runs` | integer | Runs of same-sign residuals |
+| `span_seconds` | seconds | Time span of sample set |
 
 Tags: `host`, `peer`, `reference_id`
 
@@ -194,14 +199,14 @@ Tags: `host`, `peer`, `reference_id`
 
 Collected via cron every 60 seconds using `chronyc -n clients`.
 
-| Field          | Unit          | Description                                    |
-|----------------|---------------|------------------------------------------------|
-| `ntp_requests` | integer       | Total NTP requests from this client            |
-| `ntp_drops`    | integer       | Dropped NTP requests                           |
-| `ntp_poll`     | log2(seconds) | Current poll interval (-1 if unknown)          |
-| `cmd_requests` | integer       | chronyc command requests                       |
-| `cmd_drops`    | integer       | Dropped command requests                       |
-| `last_rx`      | seconds       | Seconds since last NTP request (-1 if unknown) |
+| Field | Unit | Description |
+|-------|------|-------------|
+| `ntp_requests` | integer | Total NTP requests from this client |
+| `ntp_drops` | integer | Dropped NTP requests |
+| `ntp_poll` | log2(seconds) | Current poll interval (-1 if unknown) |
+| `cmd_requests` | integer | chronyc command requests |
+| `cmd_drops` | integer | Dropped command requests |
+| `last_rx` | seconds | Seconds since last NTP request (-1 if unknown) |
 
 Tags: `host`, `client` (client IP address)
 
