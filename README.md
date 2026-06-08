@@ -1,7 +1,7 @@
 # raspberrypi-ntp
 
 A GPS-disciplined, stratum 1 NTP server built on a Raspberry Pi 5 running Debian Bookworm.
-Uses a u-blox GPS module (model TBD) connected via UART, with a PPS signal on GPIO 18,
+Uses a Waveshare NEO-M8T GNSS Timing HAT connected via UART, with a PPS signal on GPIO 18,
 feeding [chrony](https://chrony-project.org/) for sub-microsecond time accuracy on the local network.
 
 Inspired
@@ -39,7 +39,7 @@ GPS Module (NMEA + PPS)
 - **gpsd** reads the GPS module and exposes NMEA data via shared memory (SHM)
 - **chrony** reads SHM 0 (NMEA) for time-of-day and `/dev/pps0` for the precise 1Hz pulse
 - The PPS source is `lock`ed to NMEA so it inherits time-of-day from GPS
-- Upstream NTP servers (NIST, Cloudflare) are configured as fallback/sanity check sources
+- Upstream NTP servers (NIST, Cloudflare, Apple, US pool) are configured as fallback/sanity check sources
 - `local stratum 1` ensures the Pi continues serving time even if GPS is lost
 - Clients on the LAN sync to `192.168.123.123`, achieving stratum 2
 
@@ -81,15 +81,15 @@ The GPS-relevant additions are under the `[all]` section at the bottom. Copy [`c
 
 ```ini
 # GPS PPS signal on GPIO 18
-dtoverlay=pps-gpio,gpiopin=18
+dtoverlay = pps-gpio,gpiopin=18
 
 # Enable UART for GPS serial connection
-enable_uart=1
-init_uart_baud=115200
-dtparam=uart0=on
+enable_uart = 1
+init_uart_baud = 115200
+dtparam = uart0=on
 
 # Charge the onboard RTC battery (Pi 5)
-dtparam=rtc_bbat_vchg=3000000
+dtparam = rtc_bbat_vchg=3000000
 ```
 
 See [`config/config.txt`](config/config.txt) for the full annotated file.
@@ -206,9 +206,14 @@ sudo chronyc serverstats
 │   └── gpsd                        # /etc/default/gpsd
 ├── scripts/
 │   └── up                          # System update helper script
-└── tools/
-    ├── chrony_statistics.py        # Parse and plot chrony statistics log
-    └── requirements.txt            # Python dependencies for chrony_statistics.py
+├── tools/
+│   ├── chrony_statistics.py        # Parse and plot chrony statistics log
+│   └── requirements.txt            # Python dependencies for chrony_statistics.py
+└── monitoring/                     # Telegraf + InfluxDB + Grafana monitoring stack
+    ├── README.md                   # Monitoring setup and metrics reference
+    ├── monitoring-stack/           # InfluxDB v2 + Grafana (deploy on raspberrypi-utility)
+    ├── telegraf-ntp/               # Telegraf + cron client metrics (deploy on raspberrypi-ntp)
+    └── grafana/                    # Dashboard JSON files
 ```
 
 ---
@@ -229,7 +234,5 @@ server 192.168.123.123 iburst prefer
 
 - The `leapsectz right/UTC` directive is present in chrony.conf. If you add leap-smeared
   sources (Cloudflare NTS, Google), comment this out to avoid conflicts.
-- The `testfile` (4GB) in the home directory was created during SD card speed testing
-  and can be safely deleted: `rm ~/testfile`
-- The `~/gps/venv` directory contains a Python venv used during GPS testing/exploration.
+- The `~/gps/venv` directory on the Pi contains a Python venv used during GPS testing/exploration.
   It is not required for normal operation.
