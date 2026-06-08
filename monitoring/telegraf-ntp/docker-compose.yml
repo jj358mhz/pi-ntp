@@ -8,5 +8,6 @@ services:
     network_mode: host
     volumes:
       - /opt/docker/stacks/telegraf-ntp/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+      - /sys/class/thermal/thermal_zone0/temp:/sys/class/thermal/thermal_zone0/temp:ro
     environment:
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
