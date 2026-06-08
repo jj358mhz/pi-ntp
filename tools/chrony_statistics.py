@@ -19,6 +19,8 @@ Setup:
     python3 chrony_statistics.py
 """
 
+import os
+import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 from io import StringIO
@@ -43,7 +45,7 @@ def parse_chrony_stats(file_path):
 
     df = pd.read_csv(
         csv_data,
-        delim_whitespace=True,
+        sep=r'\s+',
         names=['Date', 'Time', 'IP_Address', 'Std_dev', 'Est_offset', 'Offset_sd',
                'Diff_freq', 'Est_skew', 'Stress', 'Ns', 'Bs', 'Nr', 'Asym']
     )
@@ -95,6 +97,10 @@ def analyze_chrony_stats(file_path):
 
 if __name__ == "__main__":
     file_path = "chrony_statistics.log"
+
+    if not os.path.exists(file_path):
+        print(f"Error: {file_path} not found. Copy it from /var/log/chrony/statistics on the NTP server.")
+        sys.exit(1)
 
     df, summary, plot = analyze_chrony_stats(file_path)
 
