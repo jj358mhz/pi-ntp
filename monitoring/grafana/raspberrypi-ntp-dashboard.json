@@ -5,8 +5,8 @@
     "name": "raspberrypi-ntp-chrony-v3",
     "namespace": "default",
     "uid": "342c310c-6ea0-416f-97d3-23c2e80416cc",
-    "resourceVersion": "1780956944158011",
-    "generation": 8,
+    "resourceVersion": "1780979978347014",
+    "generation": 11,
     "creationTimestamp": "2026-06-07T05:54:43Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "851247351242752"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "",
       "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)",
       "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-08T22:15:44Z"
+      "grafana.app/updatedTimestamp": "2026-06-09T04:39:38Z"
     }
   },
   "spec": {
@@ -874,7 +874,7 @@
                         "name": "efodpma1sz474d"
                       },
                       "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu_temp\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 1000.0}))"
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu_temp\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 1000.0}))\n  |> keep(columns: [\"_time\", \"_value\"])"
                       }
                     },
                     "refId": "A",
@@ -910,6 +910,7 @@
               },
               "fieldConfig": {
                 "defaults": {
+                  "unit": "",
                   "thresholds": {
                     "mode": "absolute",
                     "steps": [
@@ -1424,7 +1425,7 @@
                         "name": "efodpma1sz474d"
                       },
                       "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"system_time\" or r._field == \"last_offset\" or r._field == \"rms_offset\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")"
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"system_time\" or r._field == \"last_offset\" or r._field == \"rms_offset\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n  |> yield(name: \"mean\")"
                       }
                     },
                     "refId": "A",
@@ -1545,7 +1546,7 @@
                         "name": "efodpma1sz474d"
                       },
                       "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"frequency\" or r._field == \"residual_freq\" or r._field == \"skew\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")"
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"frequency\" or r._field == \"residual_freq\" or r._field == \"skew\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n  |> yield(name: \"mean\")"
                       }
                     },
                     "refId": "A",
