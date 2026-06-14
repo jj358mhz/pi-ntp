@@ -198,6 +198,7 @@ sudo chronyc serverstats
 
 ```
 ├── README.md
+├── CLAUDE.md
 ├── config/
 │   ├── 99-gps-baud.rules           # /etc/udev/rules.d/ — sets ttyAMA0 to 115200 baud
 │   ├── cmdline.txt                 # /boot/firmware/cmdline.txt (serial console removed)
@@ -212,7 +213,7 @@ sudo chronyc serverstats
 └── monitoring/                     # Telegraf + InfluxDB + Grafana monitoring stack
     ├── README.md                   # Monitoring setup and metrics reference
     ├── monitoring-stack/           # InfluxDB v2 + Grafana (deploy on raspberrypi-utility)
-    ├── telegraf-ntp/               # Telegraf + cron client metrics (deploy on raspberrypi-ntp)
+    ├── telegraf-ntp/               # Telegraf + cron scripts (deploy on raspberrypi-ntp)
     └── grafana/                    # Dashboard JSON files
 ```
 
