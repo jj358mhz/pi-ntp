@@ -214,7 +214,7 @@ sudo chronyc serverstats
     ├── README.md                   # Monitoring setup and metrics reference
     ├── monitoring-stack/           # InfluxDB v2 + Grafana (deploy on raspberrypi-utility)
     ├── telegraf-ntp/               # Telegraf + cron scripts (deploy on raspberrypi-ntp)
-    └── grafana/                    # Dashboard JSON files
+    └── grafana/                    # Dashboard JSON files + alert rules
 ```
 
 ---

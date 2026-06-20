@@ -1,0 +1,168 @@
+apiVersion: 1
+groups:
+    - orgId: 1
+      name: pi-temp-checks
+      folder: Raspberry Pi Monitoring
+      interval: 2m
+      rules:
+        - uid: afpncysbsdatcf
+          title: Alert Rule 1 — Warning (70°C)
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: efodpma1sz474d
+              model:
+                intervalMs: 1000
+                maxDataPoints: 43200
+                query: |-
+                    from(bucket: "ntp")
+                      |> range(start: -5m)
+                      |> filter(fn: (r) => r._measurement == "cpu_temp" and r.host == "raspberrypi-ntp")
+                      |> last()
+                      |> map(fn: (r) => ({r with _value: float(v: r._value) / 1000.0}))
+                      |> keep(columns: ["_time", "_value"])
+                refId: A
+            - refId: B
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 70
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 2m
+          labels:
+            alertname: CPUTempHigh
+            host: raspberrypi-ntp
+            severity: warning
+          isPaused: false
+          notification_settings:
+            receiver: pi-slack-alerts
+        - uid: bfpndhzixvthce
+          title: Alert Rule 2 — Critical (80°C)
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: efodpma1sz474d
+              model:
+                intervalMs: 1000
+                maxDataPoints: 43200
+                query: |-
+                    from(bucket: "ntp")
+                      |> range(start: -5m)
+                      |> filter(fn: (r) => r._measurement == "cpu_temp" and r.host == "raspberrypi-ntp")
+                      |> last()
+                      |> map(fn: (r) => ({r with _value: float(v: r._value) / 1000.0}))
+                      |> keep(columns: ["_time", "_value"])
+                refId: A
+            - refId: B
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 80
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          labels:
+            alertname: CPUTempHigh
+            host: raspberrypi-ntp
+            severity: critical
+          isPaused: false
+          notification_settings:
+            receiver: pi-slack-alerts

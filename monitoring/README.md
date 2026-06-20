@@ -163,7 +163,38 @@ monitoring/
 └── grafana/
     ├── raspberrypi-ntp-dashboard.json          # NTP server metrics dashboard
     ├── raspberrypi-ntp-clients-dashboard.json  # NTP client monitoring dashboard
-    └── raspberrypi-ntp-gps-dashboard.json      # GPS constellation dashboard
+    ├── raspberrypi-ntp-gps-dashboard.json      # GPS constellation dashboard
+    └── alert-rules.yaml                        # CPU temp alert rules (provisioning export)
+```
+
+---
+
+## Alerting
+
+CPU temperature on `raspberrypi-ntp` is monitored by two Grafana alert rules, routed to Slack.
+
+| Rule              | Condition       | Pending period | Severity |
+|-------------------|-----------------|-----------------|----------|
+| Warning (70°C)    | `last() > 70`   | 2m              | warning  |
+| Critical (80°C)   | `last() > 80`   | None (fires immediately) | critical |
+
+- **Folder:** `Raspberry Pi Monitoring`
+- **Evaluation group:** `pi-temp-checks`, evaluated every 2m
+- **Data source:** InfluxDB (`efodpma1sz474d`), bucket `ntp`, measurement `cpu_temp`
+- **Contact point:** Slack app `Grafana Alerts` → `#grafana-alerts`, via incoming webhook
+- **Labels:** `host=raspberrypi-ntp`, `severity={warning|critical}`, `alertname=CPUTempHigh`
+
+Provisioning export: [`grafana/alert-rules.yaml`](grafana/alert-rules.yaml). To restore on a fresh
+Grafana instance, re-import via **Alerting → Alert rules → Export/Import**, and recreate the
+`pi-slack-alerts` contact point manually (webhook URLs aren't included in the export).
+
+**Important Flux gotcha:** unlike the dashboard panel queries (which use `aggregateWindow(fn: mean)`
+and get an implicit float), alert rule queries here use `last()` on the raw `cpu_temp` field, which
+stays an **int**. Dividing an int by a float literal (`1000.0`) throws `type conflict: float != int`
+in Flux's alert evaluator. The fix is an explicit cast:
+
+```flux
+|> map(fn: (r) => ({r with _value: float(v: r._value) / 1000.0}))
 ```
 
 ---
@@ -173,7 +204,7 @@ monitoring/
 ### `chrony` measurement (tracking)
 
 | Field             | Unit    | Description                         |
-|-------------------|---------|-------------------------------------|
+|-------------------|---------|--------------------------------------|
 | `system_time`     | seconds | Current clock offset from NTP time  |
 | `last_offset`     | seconds | Offset of the last clock update     |
 | `rms_offset`      | seconds | Long-term RMS average of offsets    |
@@ -189,7 +220,7 @@ Tags: `host`, `leap_status`, `reference_id`, `stratum`
 ### `chrony_sources` measurement (per-source)
 
 | Field                      | Unit          | Description                                         |
-|----------------------------|---------------|-----------------------------------------------------|
+|----------------------------|---------------|------------------------------------------------------|
 | `latest_measurement`       | seconds       | Most recent offset measurement                      |
 | `latest_measurement_error` | seconds       | Error of most recent measurement                    |
 | `reachability`             | octal (0-255) | 8-poll reachability register; 255 = fully reachable |
@@ -201,7 +232,7 @@ Tags: `host`, `peer`, `mode`, `state`, `stratum`
 ### `chrony_sourcestats` measurement (per-source statistics)
 
 | Field                | Unit    | Description                          |
-|----------------------|---------|--------------------------------------|
+|----------------------|---------|----------------------------------------|
 | `offset`             | seconds | Estimated offset of source           |
 | `offset_error`       | seconds | Error bound on offset estimate       |
 | `residual_frequency` | ppm     | Residual frequency after regression  |
@@ -218,7 +249,7 @@ Tags: `host`, `peer`, `reference_id`
 Collected via cron every 60 seconds using `chronyc -n clients`.
 
 | Field          | Unit          | Description                                    |
-|----------------|---------------|------------------------------------------------|
+|----------------|---------------|--------------------------------------------------|
 | `ntp_requests` | integer       | Total NTP requests from this client            |
 | `ntp_drops`    | integer       | Dropped NTP requests                           |
 | `ntp_poll`     | log2(seconds) | Current poll interval (-1 if unknown)          |
@@ -240,7 +271,7 @@ Tags: `host`
 Collected via cron every 60 seconds from gpsd SKY report.
 
 | Field  | Unit    | Description                      |
-|--------|---------|----------------------------------|
+|--------|---------|-----------------------------------|
 | `nSat` | integer | Total satellites visible         |
 | `uSat` | integer | Satellites used in fix           |
 | `hdop` | float   | Horizontal dilution of precision |
@@ -256,7 +287,7 @@ Collected via cron every 60 seconds from gpsd SKY report. Only satellites with s
 emitted.
 
 | Field    | Unit    | Description                      |
-|----------|---------|----------------------------------|
+|----------|---------|-----------------------------------|
 | `ss`     | dB-Hz   | Signal strength                  |
 | `el`     | degrees | Elevation angle                  |
 | `az`     | degrees | Azimuth                          |
@@ -280,5 +311,8 @@ Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo
   required on `raspberrypi-ntp` (installed by default on Bookworm)
 - CPU temperature is collected in millidegrees; use `|> map(fn: (r) => ({r with _value: r._value / 1000.0}))` in Flux
   queries
+- Alert rule queries (as opposed to dashboard panel queries) require an explicit `float(v: r._value)`
+  cast before dividing — `last()` preserves the raw int type, and Flux won't implicitly promote
+  int ÷ float the way `aggregateWindow(fn: mean)` does
 - The UniFi ZBF rule `Allow_NTP_to_InfluxDB` permits TCP 8086 from `LAN-NTP`
   zone to `192.168.1.248`

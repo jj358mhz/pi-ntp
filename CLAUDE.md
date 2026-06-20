@@ -42,7 +42,7 @@ GPS module: Waveshare NEO-M8T GNSS Timing HAT (u-blox NEO-M8T)
 └── monitoring/
     ├── monitoring-stack/       # Deploys to raspberrypi-utility via Portainer
     ├── telegraf-ntp/           # Deploys to raspberrypi-ntp via Portainer + cron
-    └── grafana/                # Dashboard JSON files, imported via Grafana UI
+    └── grafana/                # Dashboard JSON files + alert rules, imported via Grafana UI
 ```
 
 ---
@@ -88,6 +88,14 @@ ssh pi@raspberrypi-ntp "docker restart telegraf"
 ### Grafana dashboard changes
 
 Export JSON from Grafana UI and save to `monitoring/grafana/`.
+
+### Grafana alert rule changes
+
+Export YAML from Grafana UI (Alerting → Alert rules → Export) and save to
+`monitoring/grafana/alert-rules.yaml`. Note: alert queries require an explicit
+`float(v: r._value)` cast on int fields like `cpu_temp` — dashboard panel queries
+don't need this because `aggregateWindow(fn: mean)` already produces a float.
+See `monitoring/README.md` for details.
 
 ### Cron scripts
 
