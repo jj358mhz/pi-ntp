@@ -4,9 +4,21 @@
   "metadata": {
     "name": "raspberrypi-ntp-gps-constellation",
     "namespace": "default",
-    "uid": "raspberrypi-ntp-gps-v1",
+    "uid": "067ed4a6-4f4b-44d3-86eb-9b12258212bb",
+    "resourceVersion": "1781935820200981",
+    "generation": 8,
+    "creationTimestamp": "2026-06-14T03:46:42Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "3355748530610176"
+    },
     "annotations": {
-      "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)"
+      "grafana.app/createdBy": "user:bfocldg2muww0d",
+      "grafana.app/folder": "bfpnbdzs8b6yod",
+      "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)",
+      "grafana.app/updatedBy": "user:bfocldg2muww0d",
+      "grafana.app/updatedTimestamp": "2026-06-20T06:10:20Z",
+      "grafana.app/folderTitle": "Raspberry Pi Monitoring",
+      "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
     }
   },
   "spec": {
@@ -32,7 +44,7 @@
       }
     ],
     "cursorSync": "Crosshair",
-    "description": "GPS constellation monitoring for raspberrypi-ntp \u2014 satellite signal strength, DOP, and sky coverage",
+    "description": "GPS constellation monitoring for raspberrypi-ntp — satellite signal strength, DOP, and sky coverage",
     "editable": true,
     "elements": {
       "panel-1": {
@@ -116,6 +128,319 @@
                   }
                 },
                 "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-10": {
+        "kind": "Panel",
+        "spec": {
+          "id": 10,
+          "title": "Satellite Elevation (°)",
+          "description": "Higher elevation = stronger signal and less atmospheric distortion",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "efodpma1sz474d"
+                      },
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"el\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.0.2",
+            "spec": {
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [
+                    "mean",
+                    "min",
+                    "max",
+                    "last"
+                  ],
+                  "displayMode": "table",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "multi",
+                  "sort": "desc"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "displayName": "${__field.labels.constellation} PRN${__field.labels.prn}",
+                  "unit": "short",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 8,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 2,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-11": {
+        "kind": "Panel",
+        "spec": {
+          "id": 11,
+          "title": "Current Satellite Status",
+          "description": "Current snapshot of all visible satellites",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "efodpma1sz474d"
+                      },
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"ss\" or r._field == \"el\" or r._field == \"az\" or r._field == \"used\")\n  |> last()\n  |> group(columns: [\"prn\", \"constellation\", \"_field\"])\n  |> pivot(rowKey: [\"prn\", \"constellation\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> keep(columns: [\"prn\", \"used\", \"constellation\", \"ss\", \"el\", \"az\"])\n  |> sort(columns: [\"ss\"], desc: true)"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [
+                {
+                  "kind": "Transformation",
+                  "group": "organize",
+                  "spec": {
+                    "options": {
+                      "excludeByName": {},
+                      "includeByName": {},
+                      "indexByName": {
+                        "az": 3,
+                        "constellation": 0,
+                        "el": 4,
+                        "prn": 1,
+                        "ss": 5,
+                        "used": 2
+                      },
+                      "renameByName": {}
+                    }
+                  }
+                }
+              ],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.0.2",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "frameIndex": 1,
+                "showHeader": true,
+                "sortBy": [
+                  {
+                    "desc": true,
+                    "displayName": "Signal Strength (dB-Hz)"
+                  }
+                ]
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "prn"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "PRN"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "constellation"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "Constellation"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "ss"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "Signal Strength (dB-Hz)"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "el"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "Elevation (°)"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "az"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "Azimuth (°)"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "used"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "Used"
+                      },
+                      {
+                        "id": "thresholds",
+                        "value": {
+                          "mode": "absolute",
+                          "steps": [
+                            {
+                              "color": "red",
+                              "value": 0
+                            },
+                            {
+                              "color": "green",
+                              "value": 1
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
             }
           }
@@ -212,7 +537,7 @@
         "spec": {
           "id": 3,
           "title": "HDOP",
-          "description": "Horizontal Dilution of Precision \u2014 lower is better",
+          "description": "Horizontal Dilution of Precision — lower is better",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -298,7 +623,7 @@
         "spec": {
           "id": 4,
           "title": "TDOP",
-          "description": "Time Dilution of Precision \u2014 lower is better",
+          "description": "Time Dilution of Precision — lower is better",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -384,7 +709,7 @@
         "spec": {
           "id": 5,
           "title": "GDOP",
-          "description": "Geometric Dilution of Precision \u2014 lower is better",
+          "description": "Geometric Dilution of Precision — lower is better",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -470,7 +795,7 @@
         "spec": {
           "id": 6,
           "title": "PDOP",
-          "description": "Position Dilution of Precision \u2014 lower is better",
+          "description": "Position Dilution of Precision — lower is better",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -555,7 +880,7 @@
         "kind": "Panel",
         "spec": {
           "id": 7,
-          "title": "Satellites Visible vs Used",
+          "title": "Satellites Visible (nSat) vs Used (uSat)",
           "description": "",
           "links": [],
           "data": {
@@ -611,6 +936,7 @@
               },
               "fieldConfig": {
                 "defaults": {
+                  "displayName": "${__field.name}",
                   "unit": "short",
                   "thresholds": {
                     "mode": "absolute",
@@ -661,8 +987,7 @@
                     "thresholdsStyle": {
                       "mode": "off"
                     }
-                  },
-                  "displayName": "${__field.name}"
+                  }
                 },
                 "overrides": []
               }
@@ -733,6 +1058,7 @@
               },
               "fieldConfig": {
                 "defaults": {
+                  "displayName": "${__field.labels.constellation} PRN${__field.labels.prn}",
                   "unit": "short",
                   "thresholds": {
                     "mode": "absolute",
@@ -783,8 +1109,7 @@
                     "thresholdsStyle": {
                       "mode": "off"
                     }
-                  },
-                  "displayName": "${__field.labels.constellation} PRN${__field.labels.prn}"
+                  }
                 },
                 "overrides": []
               }
@@ -797,7 +1122,7 @@
         "spec": {
           "id": 9,
           "title": "DOP Values Over Time",
-          "description": "Dilution of Precision trends \u2014 lower is better",
+          "description": "Dilution of Precision trends — lower is better",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -855,6 +1180,7 @@
               },
               "fieldConfig": {
                 "defaults": {
+                  "displayName": "${__field.name}",
                   "unit": "short",
                   "thresholds": {
                     "mode": "absolute",
@@ -905,285 +1231,9 @@
                     "thresholdsStyle": {
                       "mode": "off"
                     }
-                  },
-                  "displayName": "${__field.name}"
+                  }
                 },
                 "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "panel-10": {
-        "kind": "Panel",
-        "spec": {
-          "id": 10,
-          "title": "Satellite Elevation (\u00b0)",
-          "description": "Higher elevation = stronger signal and less atmospheric distortion",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "influxdb",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
-                      "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"el\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "13.0.2",
-            "spec": {
-              "options": {
-                "annotations": {
-                  "clustering": -1,
-                  "multiLane": false
-                },
-                "legend": {
-                  "calcs": [
-                    "mean",
-                    "min",
-                    "max",
-                    "last"
-                  ],
-                  "displayMode": "table",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "multi",
-                  "sort": "desc"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "short",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "green"
-                      },
-                      {
-                        "value": 80,
-                        "color": "red"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 8,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "linear",
-                    "lineWidth": 2,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "showValues": false,
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  },
-                  "displayName": "${__field.labels.constellation} PRN${__field.labels.prn}"
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
-      "panel-11": {
-        "kind": "Panel",
-        "spec": {
-          "id": 11,
-          "title": "Current Satellite Status",
-          "description": "Current snapshot of all visible satellites",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "influxdb",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
-                      "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"ss\" or r._field == \"el\" or r._field == \"az\" or r._field == \"used\")\n  |> last()\n  |> pivot(rowKey: [\"prn\", \"constellation\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> keep(columns: [\"prn\", \"constellation\", \"ss\", \"el\", \"az\", \"used\"])\n  |> sort(columns: [\"ss\"], desc: true)"
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "table",
-            "version": "13.0.2",
-            "spec": {
-              "options": {
-                "sortBy": [
-                  {
-                    "displayName": "Signal Strength",
-                    "desc": true
-                  }
-                ]
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "custom": {
-                    "align": "auto",
-                    "displayMode": "auto"
-                  }
-                },
-                "overrides": [
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "prn"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "PRN"
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "constellation"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Constellation"
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "ss"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Signal Strength (dB-Hz)"
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "el"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Elevation (\u00b0)"
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "az"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Azimuth (\u00b0)"
-                      }
-                    ]
-                  },
-                  {
-                    "matcher": {
-                      "id": "byName",
-                      "options": "used"
-                    },
-                    "properties": [
-                      {
-                        "id": "displayName",
-                        "value": "Used"
-                      },
-                      {
-                        "id": "custom.displayMode",
-                        "value": "color-background"
-                      },
-                      {
-                        "id": "thresholds",
-                        "value": {
-                          "mode": "absolute",
-                          "steps": [
-                            {
-                              "value": 0,
-                              "color": "red"
-                            },
-                            {
-                              "value": 1,
-                              "color": "green"
-                            }
-                          ]
-                        }
-                      }
-                    ]
-                  }
-                ]
               }
             }
           }
@@ -1409,7 +1459,7 @@
       "hideTimepicker": false,
       "fiscalYearStartMonth": 0
     },
-    "title": "raspberrypi-ntp \u2014 GPS Constellation",
+    "title": "raspberrypi-ntp — GPS Constellation",
     "variables": []
   }
 }

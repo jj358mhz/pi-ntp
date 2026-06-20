@@ -5,18 +5,20 @@
     "name": "raspberrypi-ntp-clients-v2",
     "namespace": "default",
     "uid": "d93ebe1d-14d2-4702-830e-999d2fb81421",
-    "resourceVersion": "1780897732589015",
-    "generation": 14,
+    "resourceVersion": "1781935820544009",
+    "generation": 15,
     "creationTimestamp": "2026-06-08T01:00:26Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "1139578907697152"
     },
     "annotations": {
       "grafana.app/createdBy": "user:bfocldg2muww0d",
-      "grafana.app/folder": "",
+      "grafana.app/folder": "bfpnbdzs8b6yod",
       "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)",
       "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-08T05:48:52Z"
+      "grafana.app/updatedTimestamp": "2026-06-20T06:10:20Z",
+      "grafana.app/folderTitle": "Raspberry Pi Monitoring",
+      "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
     }
   },
   "spec": {
