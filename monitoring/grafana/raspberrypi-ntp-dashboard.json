@@ -5,8 +5,8 @@
     "name": "raspberrypi-ntp-chrony-v3",
     "namespace": "default",
     "uid": "342c310c-6ea0-416f-97d3-23c2e80416cc",
-    "resourceVersion": "1781935820396997",
-    "generation": 22,
+    "resourceVersion": "1782184429856009",
+    "generation": 23,
     "creationTimestamp": "2026-06-07T05:54:43Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "851247351242752"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "bfpnbdzs8b6yod",
       "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)",
       "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-20T06:10:20Z",
+      "grafana.app/updatedTimestamp": "2026-06-23T03:13:49Z",
       "grafana.app/folderTitle": "Raspberry Pi Monitoring",
       "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
     }
@@ -52,7 +52,7 @@
         "spec": {
           "id": 1,
           "title": "Stratum",
-          "description": "",
+          "description": "NTP stratum level. 1 = locked to GPS PPS reference (best). \u22652 means relying on network peers instead of GPS.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -145,7 +145,7 @@
         "spec": {
           "id": 10,
           "title": "Source Offsets (by peer)",
-          "description": "",
+          "description": "Offset of each configured source (NMEA, PPS, upstream pool servers) relative to chrony's best time estimate.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -264,7 +264,7 @@
         "spec": {
           "id": 11,
           "title": "Source Reachability (255 = fully reachable)",
-          "description": "",
+          "description": "8-poll reachability register per source. 255 = every recent poll succeeded; lower = intermittent connectivity.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -384,7 +384,7 @@
         "spec": {
           "id": 12,
           "title": "Source Offset History (by peer)",
-          "description": "",
+          "description": "Regression-based offset estimate per source from chrony's statistics engine (distinct from the live measurement above).",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -503,7 +503,7 @@
         "spec": {
           "id": 13,
           "title": "Source Residual Frequency (by peer)",
-          "description": "",
+          "description": "Residual frequency error per source after regression correction \u2014 how well each source's clock rate is characterized.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -622,7 +622,7 @@
         "spec": {
           "id": 14,
           "title": "Source Std Dev (by peer)",
-          "description": "",
+          "description": "Standard deviation of offset samples per source \u2014 how noisy/consistent each source's measurements are.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -741,7 +741,7 @@
         "spec": {
           "id": 15,
           "title": "Source Sample Count (by peer)",
-          "description": "",
+          "description": "Number of samples in chrony's regression filter per source. More samples generally means a steadier frequency estimate.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -858,8 +858,8 @@
         "kind": "Panel",
         "spec": {
           "id": 16,
-          "title": "CPU Temperature (°C)",
-          "description": "",
+          "title": "CPU Temperature (\u00b0C)",
+          "description": "Raw cpu_temp values are millidegrees; this panel divides by 1000.\nAlert thresholds: warning \u226570\u00b0C, critical \u226580\u00b0C (see Alerting in monitoring/README.md)",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -979,7 +979,7 @@
         "spec": {
           "id": 3,
           "title": "System Time Offset",
-          "description": "",
+          "description": "Current offset between system clock and true time per chrony. Should stay in the ns\u2013low \u00b5s range when GPS-locked.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1066,7 +1066,7 @@
         "spec": {
           "id": 4,
           "title": "RMS Offset",
-          "description": "",
+          "description": "Long-term RMS average of clock offset \u2014 a steadier indicator of sync quality than the instantaneous System Time Offset.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1153,7 +1153,7 @@
         "spec": {
           "id": 5,
           "title": "Clock Frequency Error",
-          "description": "",
+          "description": "Rate of drift in the Pi's local clock relative to true time, before chrony's correction. Typically a few ppm on Pi 5 hardware.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1240,7 +1240,7 @@
         "spec": {
           "id": 6,
           "title": "Frequency Skew",
-          "description": "",
+          "description": "Estimated uncertainty in the Clock Frequency Error measurement. Lower = more confident frequency correction.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1327,7 +1327,7 @@
         "spec": {
           "id": 7,
           "title": "Root Dispersion",
-          "description": "",
+          "description": "Accumulated uncertainty in time traced back through the reference chain to GPS/PPS. Should stay in the \u00b5s range.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1414,7 +1414,7 @@
         "spec": {
           "id": 8,
           "title": "System / Last / RMS Offset",
-          "description": "",
+          "description": "Combined view of current, most-recent, and long-term RMS offset \u2014 useful for spotting trends or instability.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1535,7 +1535,7 @@
         "spec": {
           "id": 9,
           "title": "Frequency / Residual Freq / Skew",
-          "description": "",
+          "description": "Combined view of frequency error, residual frequency, and skew \u2014 useful for diagnosing oscillator drift.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1939,7 +1939,7 @@
       "hideTimepicker": false,
       "fiscalYearStartMonth": 0
     },
-    "title": "raspberrypi-ntp — GPS Stratum 1 NTP Server",
+    "title": "raspberrypi-ntp \u2014 GPS Stratum 1 NTP Server",
     "variables": []
   }
 }
