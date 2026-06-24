@@ -52,7 +52,7 @@
         "spec": {
           "id": 1,
           "title": "System Time Offset (correlation reference)",
-          "description": "",
+          "description": "Reproduced from the main dashboard for context \u2014 lets you correlate client request patterns against the server's own sync quality at the same point in time.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -211,7 +211,7 @@
         "spec": {
           "id": 2,
           "title": "Total Clients",
-          "description": "",
+          "description": "Count of distinct client IPs that have made an NTP request (based on most recent chrony_clients snapshot, not a rolling total).",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -289,7 +289,7 @@
         "spec": {
           "id": 3,
           "title": "Total NTP Requests",
-          "description": "",
+          "description": "Sum of cumulative NTP requests across all clients. Resets to 0 when chrony restarts \u2014 not a steady daily/weekly count.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -367,7 +367,7 @@
         "spec": {
           "id": 4,
           "title": "Total Dropped Requests",
-          "description": "",
+          "description": "Sum of dropped NTP requests across all clients. Should stay at 0; any non-zero value suggests rate-limiting or cmdallow/ratelimit directives rejecting a client.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -449,7 +449,7 @@
         "spec": {
           "id": 5,
           "title": "Requests by VLAN",
-          "description": "",
+          "description": "Breakdown of NTP request volume by source VLAN (matched via client IP prefix), useful for confirming usage matches expected network topology.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -602,7 +602,7 @@
         "spec": {
           "id": 6,
           "title": "NTP Requests by Client (cumulative, resets on chrony restart)",
-          "description": "",
+          "description": "Per-client request count over time. Counters reset to 0 whenever chrony restarts, so look for slope/trend rather than absolute values across a restart boundary.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -735,7 +735,7 @@
         "spec": {
           "id": 7,
           "title": "Client Table (sorted by requests)",
-          "description": "",
+          "description": "Per-client snapshot: request count, drops, poll interval, and seconds since last request. Useful for spotting a client that's gone quiet (Last Seen climbing) or being rate-limited (Drops > 0).",
           "links": [],
           "data": {
             "kind": "QueryGroup",
