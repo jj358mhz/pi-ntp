@@ -5,8 +5,8 @@
     "name": "raspberrypi-ntp-gps-constellation",
     "namespace": "default",
     "uid": "067ed4a6-4f4b-44d3-86eb-9b12258212bb",
-    "resourceVersion": "1781935820200981",
-    "generation": 8,
+    "resourceVersion": "1782263305685998",
+    "generation": 9,
     "creationTimestamp": "2026-06-14T03:46:42Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "3355748530610176"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "bfpnbdzs8b6yod",
       "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)",
       "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-20T06:10:20Z",
+      "grafana.app/updatedTimestamp": "2026-06-24T01:08:25Z",
       "grafana.app/folderTitle": "Raspberry Pi Monitoring",
       "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
     }
@@ -881,7 +881,7 @@
         "spec": {
           "id": 7,
           "title": "Satellites Visible (nSat) vs Used (uSat)",
-          "description": "",
+          "description": "nSat = satellites visible (signal detected); uSat = satellites actually used in the fix. A persistent large gap (e.g. nSat≫uSat) suggests antenna/multipath issues; uSat alone drives GPS timing accuracy.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
