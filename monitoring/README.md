@@ -12,6 +12,7 @@ raspberrypi-ntp (192.168.123.123)
 │   ├── inputs.chrony → queries chronyd via UDP 127.0.0.1:323
 │   │   metrics: tracking, sources, sourcestats
 │   ├── inputs.file → /sys/class/thermal/thermal_zone0/temp → cpu_temp
+│   ├── inputs.file → /sys/class/rtc/rtc0/battery_voltage → rtc_battery_voltage
 │   └── outputs.influxdb_v2 → http://192.168.1.248:8086
 └── cron (every 60s)
     ├── push_chrony_clients.sh
@@ -24,13 +25,14 @@ raspberrypi-ntp (192.168.123.123)
 raspberrypi-utility (192.168.1.248)
 ├── InfluxDB v2 container
 │   └── bucket: ntp
-│       ├── measurement: chrony             (tracking data)
-│       ├── measurement: chrony_sources     (per-source offsets + reachability)
-│       ├── measurement: chrony_sourcestats (per-source statistics)
-│       ├── measurement: chrony_clients     (per-client NTP request counts)
-│       ├── measurement: cpu_temp           (Pi 5 CPU temperature in millidegrees)
-│       ├── measurement: gps_sky            (satellite count + DOP values)
-│       └── measurement: gps_satellites     (per-satellite signal strength + status)
+│       ├── measurement: chrony               (tracking data)
+│       ├── measurement: chrony_sources       (per-source offsets + reachability)
+│       ├── measurement: chrony_sourcestats   (per-source statistics)
+│       ├── measurement: chrony_clients       (per-client NTP request counts)
+│       ├── measurement: cpu_temp             (Pi 5 CPU temperature in millidegrees)
+│       ├── measurement: rtc_battery_voltage  (Pi 5 onboard RTC backup battery, microvolts)
+│       ├── measurement: gps_sky              (satellite count + DOP values)
+│       └── measurement: gps_satellites       (per-satellite signal strength + status)
 └── Grafana container
     ├── Dashboard: raspberrypi-ntp — GPS Stratum 1 NTP Server
     ├── Dashboard: raspberrypi-ntp — NTP Clients
@@ -154,7 +156,7 @@ monitoring/
 │   └── .env.example
 ├── telegraf-ntp/
 │   ├── docker-compose.yml          # Telegraf container (raspberrypi-ntp)
-│   ├── telegraf.conf               # Chrony + CPU temp inputs
+│   ├── telegraf.conf               # Chrony + CPU temp + RTC battery voltage inputs
 │   ├── chrony_clients.sh           # Generates InfluxDB line protocol from chronyc clients
 │   ├── push_chrony_clients.sh      # Wraps chrony_clients.sh and POSTs to InfluxDB
 │   ├── gps_satellites.py           # Parses gpsd SKY JSON into InfluxDB line protocol
@@ -173,10 +175,10 @@ monitoring/
 
 CPU temperature on `raspberrypi-ntp` is monitored by two Grafana alert rules, routed to Slack.
 
-| Rule              | Condition       | Pending period | Severity |
-|-------------------|-----------------|-----------------|----------|
-| Warning (70°C)    | `last() > 70`   | 2m              | warning  |
-| Critical (80°C)   | `last() > 80`   | None (fires immediately) | critical |
+| Rule            | Condition     | Pending period           | Severity |
+|-----------------|---------------|--------------------------|----------|
+| Warning (70°C)  | `last() > 70` | 2m                       | warning  |
+| Critical (80°C) | `last() > 80` | None (fires immediately) | critical |
 
 - **Folder:** `Raspberry Pi Monitoring`
 - **Evaluation group:** `pi-temp-checks`, evaluated every 2m
@@ -197,6 +199,9 @@ in Flux's alert evaluator. The fix is an explicit cast:
 |> map(fn: (r) => ({r with _value: float(v: r._value) / 1000.0}))
 ```
 
+No alert rules exist yet for `rtc_battery_voltage` — pending a baseline observation period (see
+below).
+
 ---
 
 ## Chrony Metrics Reference
@@ -204,7 +209,7 @@ in Flux's alert evaluator. The fix is an explicit cast:
 ### `chrony` measurement (tracking)
 
 | Field             | Unit    | Description                         |
-|-------------------|---------|--------------------------------------|
+|-------------------|---------|-------------------------------------|
 | `system_time`     | seconds | Current clock offset from NTP time  |
 | `last_offset`     | seconds | Offset of the last clock update     |
 | `rms_offset`      | seconds | Long-term RMS average of offsets    |
@@ -220,7 +225,7 @@ Tags: `host`, `leap_status`, `reference_id`, `stratum`
 ### `chrony_sources` measurement (per-source)
 
 | Field                      | Unit          | Description                                         |
-|----------------------------|---------------|------------------------------------------------------|
+|----------------------------|---------------|-----------------------------------------------------|
 | `latest_measurement`       | seconds       | Most recent offset measurement                      |
 | `latest_measurement_error` | seconds       | Error of most recent measurement                    |
 | `reachability`             | octal (0-255) | 8-poll reachability register; 255 = fully reachable |
@@ -232,7 +237,7 @@ Tags: `host`, `peer`, `mode`, `state`, `stratum`
 ### `chrony_sourcestats` measurement (per-source statistics)
 
 | Field                | Unit    | Description                          |
-|----------------------|---------|----------------------------------------|
+|----------------------|---------|--------------------------------------|
 | `offset`             | seconds | Estimated offset of source           |
 | `offset_error`       | seconds | Error bound on offset estimate       |
 | `residual_frequency` | ppm     | Residual frequency after regression  |
@@ -249,7 +254,7 @@ Tags: `host`, `peer`, `reference_id`
 Collected via cron every 60 seconds using `chronyc -n clients`.
 
 | Field          | Unit          | Description                                    |
-|----------------|---------------|--------------------------------------------------|
+|----------------|---------------|------------------------------------------------|
 | `ntp_requests` | integer       | Total NTP requests from this client            |
 | `ntp_drops`    | integer       | Dropped NTP requests                           |
 | `ntp_poll`     | log2(seconds) | Current poll interval (-1 if unknown)          |
@@ -266,12 +271,23 @@ Values are in millidegrees Celsius — divide by 1000 in Grafana queries.
 
 Tags: `host`
 
+### `rtc_battery_voltage` measurement
+
+Collected via Telegraf `inputs.file` every 60 seconds from `/sys/class/rtc/rtc0/battery_voltage`.
+This is the Pi 5's onboard RTC backup battery (connected via the J5/BAT connector), trickle-charged
+to 3.0V via `dtparam=rtc_bbat_vchg=3000000` in `config.txt`. Distinct from the GPS module's ML1220
+backup cell, which has no software-readable voltage.
+
+Value is in microvolts — divide by 1,000,000 in Grafana queries.
+
+Tags: `host`
+
 ### `gps_sky` measurement (sky summary)
 
 Collected via cron every 60 seconds from gpsd SKY report.
 
 | Field  | Unit    | Description                      |
-|--------|---------|-----------------------------------|
+|--------|---------|----------------------------------|
 | `nSat` | integer | Total satellites visible         |
 | `uSat` | integer | Satellites used in fix           |
 | `hdop` | float   | Horizontal dilution of precision |
@@ -287,7 +303,7 @@ Collected via cron every 60 seconds from gpsd SKY report. Only satellites with s
 emitted.
 
 | Field    | Unit    | Description                      |
-|----------|---------|-----------------------------------|
+|----------|---------|----------------------------------|
 | `ss`     | dB-Hz   | Signal strength                  |
 | `el`     | degrees | Elevation angle                  |
 | `az`     | degrees | Azimuth                          |
@@ -314,5 +330,7 @@ Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo
 - Alert rule queries (as opposed to dashboard panel queries) require an explicit `float(v: r._value)`
   cast before dividing — `last()` preserves the raw int type, and Flux won't implicitly promote
   int ÷ float the way `aggregateWindow(fn: mean)` does
+- RTC battery voltage uses a slower 60s poll interval than CPU temp (10s) since it changes
+  much more slowly — no alert thresholds are set yet pending a baseline observation period
 - The UniFi ZBF rule `Allow_NTP_to_InfluxDB` permits TCP 8086 from `LAN-NTP`
   zone to `192.168.1.248`
