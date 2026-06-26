@@ -5,8 +5,8 @@
     "name": "raspberrypi-ntp-clients-v2",
     "namespace": "default",
     "uid": "d93ebe1d-14d2-4702-830e-999d2fb81421",
-    "resourceVersion": "1781935820544009",
-    "generation": 15,
+    "resourceVersion": "1782509936161981",
+    "generation": 20,
     "creationTimestamp": "2026-06-08T01:00:26Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "1139578907697152"
@@ -14,9 +14,9 @@
     "annotations": {
       "grafana.app/createdBy": "user:bfocldg2muww0d",
       "grafana.app/folder": "bfpnbdzs8b6yod",
-      "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)",
+      "grafana.app/saved-from-ui": "Grafana v13.1.0 (b309c9bb3b)",
       "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-20T06:10:20Z",
+      "grafana.app/updatedTimestamp": "2026-06-26T21:38:56Z",
       "grafana.app/folderTitle": "Raspberry Pi Monitoring",
       "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
     }
@@ -52,7 +52,7 @@
         "spec": {
           "id": 1,
           "title": "System Time Offset (correlation reference)",
-          "description": "Reproduced from the main dashboard for context \u2014 lets you correlate client request patterns against the server's own sync quality at the same point in time.",
+          "description": "Reproduced from the main dashboard for context — lets you correlate client request patterns against the server's own sync quality at the same point in time.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -84,7 +84,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -96,6 +96,8 @@
                     "last"
                   ],
                   "displayMode": "list",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "right",
                   "showLegend": true
                 },
@@ -243,7 +245,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -289,7 +291,7 @@
         "spec": {
           "id": 3,
           "title": "Total NTP Requests",
-          "description": "Sum of cumulative NTP requests across all clients. Resets to 0 when chrony restarts \u2014 not a steady daily/weekly count.",
+          "description": "Sum of cumulative NTP requests across all clients. Resets to 0 when chrony restarts — not a steady daily/weekly count.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -321,7 +323,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -399,7 +401,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -481,7 +483,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "piechart",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "displayLabels": [
@@ -493,6 +495,7 @@
                     "sum"
                   ],
                   "displayMode": "table",
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -515,7 +518,8 @@
                 "defaults": {
                   "unit": "short",
                   "color": {
-                    "mode": "palette-classic"
+                    "mode": "palette-classic",
+                    "fixedColor": "#73BF69"
                   },
                   "custom": {
                     "hideFrom": {
@@ -634,7 +638,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -647,6 +651,8 @@
                     "max"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "right",
                   "showLegend": true
                 },
@@ -767,7 +773,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "table",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "cellHeight": "sm",
@@ -896,6 +902,119 @@
             }
           }
         }
+      },
+      "panel-8": {
+        "kind": "Panel",
+        "spec": {
+          "id": 8,
+          "title": "NTP Requests per Day (by Client)",
+          "description": "Daily NTP request count per client, derived from chrony's cumulative request counter. Uses increase() + difference() to correctly handle counter resets from chronyd restarts, so daily totals stay accurate even if the service restarts mid-day. Always shows the trailing 7 complete days, regardless of the dashboard's time range picker.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "efodpma1sz474d"
+                      },
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> group(columns: [\"client\"])\n  |> increase()\n  |> aggregateWindow(every: 1d, fn: last, createEmpty: false)\n  |> difference(nonNegative: true)\n  |> group()\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"client\"], valueColumn: \"_value\")\n  |> yield(name: \"daily_by_client\")"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "barchart",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "barRadius": 0.05,
+                "barWidth": 0.95,
+                "fullHighlight": false,
+                "groupWidth": 0.8,
+                "legend": {
+                  "calcs": [
+                    "lastNotNull",
+                    "max"
+                  ],
+                  "displayMode": "table",
+                  "overflow": "ellipsis",
+                  "placement": "right",
+                  "showLegend": true
+                },
+                "orientation": "auto",
+                "showValue": "auto",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xField": "time",
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 100
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 100,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 0,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "fieldMinMax": false
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
       }
     },
     "layout": {
@@ -1009,11 +1128,24 @@
                       "spec": {
                         "x": 0,
                         "y": 0,
-                        "width": 24,
-                        "height": 10,
+                        "width": 12,
+                        "height": 9,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-6"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 0,
+                        "width": 12,
+                        "height": 9,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-8"
                         }
                       }
                     }
