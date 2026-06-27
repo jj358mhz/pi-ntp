@@ -32,6 +32,7 @@ keys/
 # Environment files
 .env
 .env.*
+!.env.example
 
 # Temporary / editor files
 *.swp
