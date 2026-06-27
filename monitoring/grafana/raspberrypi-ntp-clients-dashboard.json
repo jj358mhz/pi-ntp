@@ -5,8 +5,8 @@
     "name": "raspberrypi-ntp-clients-v2",
     "namespace": "default",
     "uid": "d93ebe1d-14d2-4702-830e-999d2fb81421",
-    "resourceVersion": "1782509936161981",
-    "generation": 20,
+    "resourceVersion": "1782518789200987",
+    "generation": 23,
     "creationTimestamp": "2026-06-08T01:00:26Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "1139578907697152"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "bfpnbdzs8b6yod",
       "grafana.app/saved-from-ui": "Grafana v13.1.0 (b309c9bb3b)",
       "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-26T21:38:56Z",
+      "grafana.app/updatedTimestamp": "2026-06-27T00:06:29Z",
       "grafana.app/folderTitle": "Raspberry Pi Monitoring",
       "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
     }
@@ -468,7 +468,7 @@
                         "name": "efodpma1sz474d"
                       },
                       "spec": {
-                        "query": "import \"strings\"\n\nfrom(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> last()\n  |> map(fn: (r) => ({\n      _value: r._value,\n      _time: r._time,\n      _field: if strings.hasPrefix(v: r.client, prefix: \"192.168.1.\") then \"LAN-Core\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.10.\") then \"LAN-Corp\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.40.\") then \"LAN-IoT\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.30.\") then \"LAN-Security\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.53.\") then \"LAN-DNS\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.123.\") then \"LAN-NTP\"\n              else \"Other\"\n  }))\n  |> group(columns: [\"_field\"])\n  |> sum(column: \"_value\")"
+                        "query": "import \"strings\"\n\nfrom(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> last()\n  |> map(fn: (r) => ({\n      _value: r._value,\n      _time: r._time,\n      _field: if strings.hasPrefix(v: r.client, prefix: \"192.168.1.\") then \"LAN-Core\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.10.\") then \"LAN-Corp\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.20.\") then \"LAN-Guest\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.30.\") then \"LAN-Security\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.40.\") then \"LAN-IoT\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.53.\") then \"LAN-DNS\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.70.\") then \"DMZ-Scanner\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.123.\") then \"LAN-NTP\"\n              else \"Other\"\n  }))\n  |> group(columns: [\"_field\"])\n  |> sum(column: \"_value\")"
                       }
                     },
                     "refId": "A",
@@ -592,6 +592,32 @@
                       {
                         "id": "displayName",
                         "value": "LAN-Security"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "_value LAN-NTP"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "LAN-NTP"
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "scope": "series",
+                      "options": "_value DMZ-Scanner"
+                    },
+                    "properties": [
+                      {
+                        "id": "displayName",
+                        "value": "DMZ-Scanner"
                       }
                     ]
                   }
