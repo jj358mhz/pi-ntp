@@ -7,13 +7,31 @@
 #
 # Cron entry:
 #   * * * * * root /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh
+#
+# Requires /opt/docker/stacks/telegraf-ntp/.env to provide INFLUXDB_TOKEN.
+# See .env.example in the repo for the expected format.
+
+SCRIPT_DIR="/opt/docker/stacks/telegraf-ntp"
+ENV_FILE="${SCRIPT_DIR}/.env"
+
+if [ ! -f "$ENV_FILE" ]; then
+    echo "$(date): Error: missing ${ENV_FILE} — copy .env.example and set INFLUXDB_TOKEN" >&2
+    exit 1
+fi
+
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+
+if [ -z "$INFLUXDB_TOKEN" ] || [ "$INFLUXDB_TOKEN" = "changeme-must-match-monitoring-stack-token" ]; then
+    echo "$(date): Error: INFLUXDB_TOKEN not set in ${ENV_FILE}" >&2
+    exit 1
+fi
 
 INFLUXDB_URL="http://192.168.1.248:8086"
-INFLUXDB_TOKEN="changeme-replace-with-your-token"
 INFLUXDB_ORG="homelab"
 INFLUXDB_BUCKET="ntp"
 
-/opt/docker/stacks/telegraf-ntp/chrony_clients.sh | curl -s -X POST \
+"${SCRIPT_DIR}/chrony_clients.sh" | curl -s -X POST \
   "${INFLUXDB_URL}/api/v2/write?bucket=${INFLUXDB_BUCKET}&org=${INFLUXDB_ORG}" \
   -H "Authorization: Token ${INFLUXDB_TOKEN}" \
   -H "Content-Type: text/plain" \
