@@ -1,6 +1,91 @@
 apiVersion: 1
 groups:
     - orgId: 1
+      name: gps-health
+      folder: Raspberry Pi Monitoring
+      interval: 1m
+      rules:
+        - uid: bfqgpz95b124ge
+          title: raspberrypi-ntp — GPS Fix Degraded
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: efodpma1sz474d
+              model:
+                intervalMs: 1000
+                maxDataPoints: 43200
+                query: |-
+                    from(bucket: "ntp")
+                      |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+                      |> filter(fn: (r) => r._measurement == "gps_tpv" and r.host == "raspberrypi-ntp")
+                      |> filter(fn: (r) => r._field == "mode")
+                      |> last()
+                refId: A
+            - refId: B
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params: []
+                        type: gt
+                      operator:
+                        type: and
+                      query:
+                        params: []
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                reducer: last
+                refId: B
+                type: reduce
+            - refId: C
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 3
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: B
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 5m
+          annotations:
+            summary: GPS fix mode is {{ $values.B }} (below 3D). PPS timing discipline may be degraded. Check antenna/sky visibility on raspberrypi-ntp.
+          labels:
+            severity: critical
+          isPaused: false
+          notification_settings:
+            receiver: pi-slack-alerts
+    - orgId: 1
       name: pi-temp-checks
       folder: Raspberry Pi Monitoring
       interval: 2m
