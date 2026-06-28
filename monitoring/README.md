@@ -19,8 +19,8 @@ raspberrypi-ntp (192.168.123.123)
     │   ├── chrony_clients.sh → chronyc -n clients → InfluxDB line protocol
     │   └── curl POST → http://192.168.1.248:8086 → chrony_clients measurement
     └── push_gps_satellites.sh
-        ├── gpspipe → gpsd SKY message → gps_satellites.py → InfluxDB line protocol
-        └── curl POST → http://192.168.1.248:8086 → gps_sky + gps_satellites measurements
+        ├── gpspipe → one SKY + one TPV message → gps_satellites.py → InfluxDB line protocol
+        └── curl POST → http://192.168.1.248:8086 → gps_sky + gps_satellites + gps_tpv measurements
 
 raspberrypi-utility (192.168.1.248)
 ├── InfluxDB v2 container
@@ -32,7 +32,8 @@ raspberrypi-utility (192.168.1.248)
 │       ├── measurement: cpu_temp             (Pi 5 CPU temperature in millidegrees)
 │       ├── measurement: rtc_battery_voltage  (Pi 5 onboard RTC backup battery, microvolts)
 │       ├── measurement: gps_sky              (satellite count + DOP values)
-│       └── measurement: gps_satellites       (per-satellite signal strength + status)
+│       ├── measurement: gps_satellites       (per-satellite signal strength + status)
+│       └── measurement: gps_tpv              (fix mode + time/position error estimates)
 └── Grafana container
     ├── Dashboard: raspberrypi-ntp — GPS Stratum 1 NTP Server
     ├── Dashboard: raspberrypi-ntp — NTP Clients
@@ -59,7 +60,9 @@ On `raspberrypi-utility`:
 openssl rand -hex 32
 ```
 
-Save this token — you'll need it in both stacks.
+Save this token — you'll need it in both stacks. **It must be identical on both Pis** — it's the
+same InfluxDB admin token, used both to initialize the instance and to authenticate every write
+to it.
 
 ### Step 2 — Deploy monitoring stack on `raspberrypi-utility`
 
@@ -74,6 +77,10 @@ INFLUXDB_TOKEN=your-generated-token
 INFLUXDB_PASSWORD=your-strong-password
 GRAFANA_PASSWORD=your-strong-password
 ```
+
+**Note:** these are read by `DOCKER_INFLUXDB_INIT_*` env vars in the compose file, which only take
+effect on the container's **first boot** against an empty data volume. Changing them later won't
+rotate anything on an already-initialized instance.
 
 ### Step 3 — Create Telegraf config on `raspberrypi-ntp`
 
@@ -106,15 +113,30 @@ sudo cp telegraf-ntp/push_chrony_clients.sh /opt/docker/stacks/telegraf-ntp/
 sudo cp telegraf-ntp/gps_satellites.py /opt/docker/stacks/telegraf-ntp/
 sudo cp telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/
 sudo chmod +x /opt/docker/stacks/telegraf-ntp/*.sh
+sudo chown root:root /opt/docker/stacks/telegraf-ntp/*.sh /opt/docker/stacks/telegraf-ntp/*.py
 
-# Set your InfluxDB token in both push scripts
-sudo nano /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh
-sudo nano /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh
+# Create .env with the real token (same value as Step 1)
+sudo cp telegraf-ntp/.env.example /opt/docker/stacks/telegraf-ntp/.env
+sudo nano /opt/docker/stacks/telegraf-ntp/.env
+sudo chmod 600 /opt/docker/stacks/telegraf-ntp/.env
+sudo chown root:root /opt/docker/stacks/telegraf-ntp/.env
+
+# Test before trusting cron — silent exit on both = success
+sudo /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh
+sudo /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh
 
 # Install cron jobs
 echo "* * * * * root /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh" | sudo tee /etc/cron.d/chrony-clients
 echo "* * * * * root /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh" | sudo tee /etc/cron.d/gps-satellites
 ```
+
+Both push scripts source `.env` for `INFLUXDB_TOKEN` at runtime and exit with a clear error
+(rather than silently writing unauthorized requests) if `.env` is missing or still has the
+placeholder value — if the manual test above fails, check `.env` first.
+
+**Note:** `/opt/docker/stacks/telegraf-ntp/` is a deployment path, not a git checkout — it does
+not auto-update on `git pull`. Re-run the relevant `cp`/`chmod`/`chown` lines above any time the
+scripts change in this repo.
 
 ### Step 6 — Add InfluxDB data source in Grafana
 
@@ -143,6 +165,9 @@ Dashboards → New → Import → Upload JSON file:
 - The datasource is referenced by internal ID (`efodpma1sz474d`) — if importing on a different Grafana instance, edit
   the JSON and replace all occurrences of `efodpma1sz474d` with your own InfluxDB datasource name
 - `raspberrypi-ntp-clients-dashboard.json` uses the classic format and works on Grafana v10+
+- The GPS Constellation dashboard's "Current Satellite Status" table includes a data link on the
+  `prn`/`constellation` column that opens the relevant Wikipedia satellite list (GPS or GLONASS)
+  in a new tab — useful for looking up which physical satellite (SVN) a given PRN currently maps to
 
 ---
 
@@ -159,19 +184,21 @@ monitoring/
 │   ├── telegraf.conf               # Chrony + CPU temp + RTC battery voltage inputs
 │   ├── chrony_clients.sh           # Generates InfluxDB line protocol from chronyc clients
 │   ├── push_chrony_clients.sh      # Wraps chrony_clients.sh and POSTs to InfluxDB
-│   ├── gps_satellites.py           # Parses gpsd SKY JSON into InfluxDB line protocol
-│   ├── push_gps_satellites.sh      # Calls gps_satellites.py and POSTs to InfluxDB
+│   ├── gps_satellites.py           # Parses gpsd SKY + TPV JSON into InfluxDB line protocol
+│   ├── push_gps_satellites.sh      # Captures SKY+TPV via gpspipe, calls gps_satellites.py, POSTs to InfluxDB
 │   └── .env.example
 └── grafana/
     ├── raspberrypi-ntp-dashboard.json          # NTP server metrics dashboard
     ├── raspberrypi-ntp-clients-dashboard.json  # NTP client monitoring dashboard
     ├── raspberrypi-ntp-gps-dashboard.json      # GPS constellation dashboard
-    └── alert-rules.yaml                        # CPU temp alert rules (provisioning export)
+    └── alert-rules.yaml                        # Alert rules (provisioning export)
 ```
 
 ---
 
 ## Alerting
+
+### CPU temperature
 
 CPU temperature on `raspberrypi-ntp` is monitored by two Grafana alert rules, routed to Slack.
 
@@ -186,10 +213,6 @@ CPU temperature on `raspberrypi-ntp` is monitored by two Grafana alert rules, ro
 - **Contact point:** Slack app `Grafana Alerts` → `#grafana-alerts`, via incoming webhook
 - **Labels:** `host=raspberrypi-ntp`, `severity={warning|critical}`, `alertname=CPUTempHigh`
 
-Provisioning export: [`grafana/alert-rules.yaml`](grafana/alert-rules.yaml). To restore on a fresh
-Grafana instance, re-import via **Alerting → Alert rules → Export/Import**, and recreate the
-`pi-slack-alerts` contact point manually (webhook URLs aren't included in the export).
-
 **Important Flux gotcha:** unlike the dashboard panel queries (which use `aggregateWindow(fn: mean)`
 and get an implicit float), alert rule queries here use `last()` on the raw `cpu_temp` field, which
 stays an **int**. Dividing an int by a float literal (`1000.0`) throws `type conflict: float != int`
@@ -199,8 +222,26 @@ in Flux's alert evaluator. The fix is an explicit cast:
 |> map(fn: (r) => ({r with _value: float(v: r._value) / 1000.0}))
 ```
 
+### GPS fix status
+
+| Rule             | Condition        | Pending period | Severity |
+|------------------|------------------|----------------|----------|
+| GPS Fix Degraded | `last(mode) < 3` | 5m             | critical |
+
+- **Folder:** `Raspberry Pi Monitoring`
+- **Evaluation group:** `gps-health`, evaluated every 1m (matches the cron push rate)
+- **Data source:** InfluxDB (`efodpma1sz474d`), bucket `ntp`, measurement `gps_tpv`, field `mode`
+- **Contact point:** same Slack contact point as the CPU temp alerts
+- 5-minute pending period is intentional — a momentary dip to 2D fix from a brief obstruction
+  shouldn't page; only a sustained loss of 3D fix should. This is the earliest available signal
+  that PPS timing discipline may be degrading, ahead of any visible change in chrony's own offset.
+
 No alert rules exist yet for `rtc_battery_voltage` — pending a baseline observation period (see
 below).
+
+Provisioning export: [`grafana/alert-rules.yaml`](grafana/alert-rules.yaml). To restore on a fresh
+Grafana instance, re-import via **Alerting → Alert rules → Export/Import**, and recreate the
+Slack contact point manually (webhook URLs aren't included in the export).
 
 ---
 
@@ -312,6 +353,31 @@ emitted.
 
 Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo/BeiDou/SBAS/QZSS)
 
+### `gps_tpv` measurement (fix status)
+
+Collected via cron every 60 seconds from gpsd TPV report, captured in the same `gpspipe` read as
+the SKY report used for `gps_sky`/`gps_satellites` above.
+
+| Field  | Unit    | Description                                    |
+|--------|---------|------------------------------------------------|
+| `mode` | integer | Fix mode: 0/1 = no fix, 2 = 2D fix, 3 = 3D fix |
+| `ept`  | seconds | gpsd's estimated timestamp error               |
+| `epx`  | meters  | Estimated longitude error                      |
+| `epy`  | meters  | Estimated latitude error                       |
+| `epv`  | meters  | Estimated vertical error                       |
+
+Tags: `host`
+
+**`mode` is the most operationally important field here** — a sustained drop below 3 is the
+earliest available warning that PPS timing discipline may be degrading (see the GPS Fix Degraded
+alert above).
+
+**`ept` appears to be a flat, unchanging value (~0.005s) on this receiver**, regardless of actual
+satellite geometry or signal quality. This strongly suggests the chipset doesn't transmit a real
+per-fix timestamp-uncertainty figure over NMEA, and gpsd is falling back to a hardcoded default
+rather than computing it live. Treat `ept` (and `epx`/`epy`/`epv`) as informational only — `mode`
+and `gps_sky.tdop` are the fields that reflect genuine, live fix quality.
+
 ---
 
 ## Notes
@@ -323,8 +389,12 @@ Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo
   `cmdallow 127.0.0.1` is present in `chrony.conf` for future use
 - Client metrics use a cron+curl approach because `chronyc` binary dependencies
   are not available inside the Telegraf container
-- GPS satellite metrics use `gpspipe` to query gpsd on the host — Python 3 is
-  required on `raspberrypi-ntp` (installed by default on Bookworm)
+- GPS metrics use `gpspipe` to query gpsd on the host — Python 3 is required on
+  `raspberrypi-ntp` (installed by default on Bookworm). A single `gpspipe -n 20`
+  read captures both the SKY and TPV message types needed for all three GPS
+  measurements; `gps_satellites.py` auto-detects message class line-by-line
+  rather than assuming a fixed order, so it degrades gracefully if one message
+  type doesn't appear in a given read
 - CPU temperature is collected in millidegrees; use `|> map(fn: (r) => ({r with _value: r._value / 1000.0}))` in Flux
   queries
 - Alert rule queries (as opposed to dashboard panel queries) require an explicit `float(v: r._value)`
@@ -334,3 +404,6 @@ Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo
   much more slowly — no alert thresholds are set yet pending a baseline observation period
 - The UniFi ZBF rule `Allow_NTP_to_InfluxDB` permits TCP 8086 from `LAN-NTP`
   zone to `192.168.1.248`
+- Both `push_chrony_clients.sh` and `push_gps_satellites.sh` source `.env` for `INFLUXDB_TOKEN`
+  rather than hardcoding it, and exit with a clear error if `.env` is missing or still has the
+  placeholder value — see `CLAUDE.md` → Secrets for the full token-management/rotation notes
