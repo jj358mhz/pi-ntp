@@ -41,7 +41,9 @@ GPS module: Waveshare NEO-M8T GNSS Timing HAT (u-blox NEO-M8T)
 │   └── chrony_statistics.py    # Standalone analysis tool, runs locally
 └── monitoring/
     ├── monitoring-stack/       # Deploys to raspberrypi-utility via Portainer
+    │   └── .env.example        # Template — copy to .env on raspberrypi-utility, fill in real values
     ├── telegraf-ntp/           # Deploys to raspberrypi-ntp via Portainer + cron
+    │   └── .env.example        # Template — copy to .env on raspberrypi-ntp, fill in real token
     └── grafana/                # Dashboard JSON files + alert rules, imported via Grafana UI
 ```
 
@@ -55,13 +57,32 @@ GPS module: Waveshare NEO-M8T GNSS Timing HAT (u-blox NEO-M8T)
 - `portainer_agent` (Docker) — Portainer management
 - `cron` — runs scripts every minute:
     - `push_chrony_clients.sh` — NTP client metrics
-    - `push_gps_satellites.sh` — GPS constellation metrics (via gpsd)
+    - `push_gps_satellites.sh` — GPS constellation + fix metrics (via gpsd)
 
 ## Key Services on raspberrypi-utility
 
 - `influxdb` (Docker) — time series database, bucket: `ntp`
 - `grafana` (Docker) — dashboards
 - `portainer` (Docker) — container management UI
+
+---
+
+## InfluxDB Measurements
+
+Written by the cron scripts on `raspberrypi-ntp`:
+
+| Measurement      | Source               | Key fields                                                                           |
+|------------------|----------------------|--------------------------------------------------------------------------------------|
+| `chrony_clients` | `chronyc -n clients` | `ntp_requests`, `ntp_drops`, `ntp_poll`, `last_rx`                                   |
+| `gps_sky`        | gpsd SKY message     | `nSat`, `uSat`, `hdop`, `gdop`, `tdop`, `pdop`                                       |
+| `gps_satellites` | gpsd SKY message     | per-satellite: `ss`, `el`, `az`, `used`, `health` (tagged by `prn`, `constellation`) |
+| `gps_tpv`        | gpsd TPV message     | `mode` (0/1=no fix, 2=2D, 3=3D), `ept`, `epx`, `epy`, `epv`                          |
+
+**Note on `gps_tpv.ept`:** this receiver appears to report a flat, unchanging value (~0.005s)
+regardless of actual satellite geometry or fix quality — likely a hardcoded gpsd fallback rather
+than a real per-fix computation, since this particular GPS chipset may not transmit a genuine
+timestamp-uncertainty figure over NMEA. Treat `ept` as informational only; `mode` and `tdop`
+(from `gps_sky`) are the metrics that reflect real, live fix quality.
 
 ---
 
@@ -89,6 +110,12 @@ ssh pi@raspberrypi-ntp "docker restart telegraf"
 
 Export JSON from Grafana UI and save to `monitoring/grafana/`.
 
+Current dashboards:
+
+- **raspberrypi-ntp — GPS Constellation** — satellite signal strength, DOP, fix status (`gps_tpv.mode`),
+  GPS time error estimate, and sky coverage. "Current Satellite Status" table includes a data link
+  on `prn`/`constellation` that opens the relevant Wikipedia satellite list (GPS or GLONASS) in a new tab.
+
 ### Grafana alert rule changes
 
 Export YAML from Grafana UI (Alerting → Alert rules → Export) and save to
@@ -97,23 +124,64 @@ Export YAML from Grafana UI (Alerting → Alert rules → Export) and save to
 don't need this because `aggregateWindow(fn: mean)` already produces a float.
 See `monitoring/README.md` for details.
 
+Current alert rules:
+
+- **raspberrypi-ntp — GPS Fix Degraded** — fires when `gps_tpv.mode < 3` (i.e. drops below 3D fix)
+  for a sustained 5 minutes. Evaluation group `gps-health`, 1m interval (matches the cron push rate).
+  Routed to Slack. This is the earliest available warning that PPS timing discipline may be
+  degrading, ahead of any visible change in chrony's own offset.
+
 ### Cron scripts
 
 Located at `/opt/docker/stacks/telegraf-ntp/` on `raspberrypi-ntp`:
 
 - `chrony_clients.sh` — generates InfluxDB line protocol from `chronyc -n clients`
 - `push_chrony_clients.sh` — POSTs output to InfluxDB via curl
-- `gps_satellites.py` — parses gpsd SKY JSON into InfluxDB line protocol
-- `push_gps_satellites.sh` — calls gps_satellites.py and POSTs to InfluxDB
+- `gps_satellites.py` — parses gpsd SKY *and* TPV JSON into InfluxDB line protocol
+  (emits `gps_sky`, `gps_satellites`, and `gps_tpv` measurements)
+- `push_gps_satellites.sh` — captures one SKY + one TPV message via a single `gpspipe` read,
+  calls `gps_satellites.py`, and POSTs to InfluxDB
 - Cron entries: `/etc/cron.d/chrony-clients`, `/etc/cron.d/gps-satellites`
+
+Both push scripts source `/opt/docker/stacks/telegraf-ntp/.env` for `INFLUXDB_TOKEN` and will
+**fail loudly** (clear error to stderr, non-zero exit) if `.env` is missing or still contains the
+placeholder value — this is intentional, so a bad deploy is caught immediately in cron logs or a
+manual test run rather than silently writing unauthorized requests.
+
+**Important:** `/opt/docker/stacks/telegraf-ntp/` on the Pi is a separate, manually-managed
+deployment path — it does **not** auto-sync from the git checkout. After `git pull`, scripts must
+be copied over by hand:
+
+```bash
+sudo cp ~/git/pi-ntp/monitoring/telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/
+sudo cp ~/git/pi-ntp/monitoring/telegraf-ntp/gps_satellites.py /opt/docker/stacks/telegraf-ntp/
+sudo chown root:root /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/gps_satellites.py
+sudo chmod +x /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/gps_satellites.py
+sudo /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh   # manual test — silent exit = success
+```
 
 ---
 
 ## Secrets
 
-- InfluxDB token is in `push_chrony_clients.sh` on the Pi — **not committed to the repo**
-- The `.env.example` files use placeholder values only
-- Never commit real tokens, passwords, or keys
+- Real secrets live in `.env` files on each Pi, **never committed**:
+    - `raspberrypi-ntp`: `/opt/docker/stacks/telegraf-ntp/.env` → `INFLUXDB_TOKEN`
+    - `raspberrypi-utility`: same directory as the monitoring-stack `docker-compose.yml`
+      (Portainer-managed; find current path with
+      `sudo find / -iname docker-compose.yml 2>/dev/null | grep -v '/proc\|/sys'`) →
+      `INFLUXDB_TOKEN`, `INFLUXDB_PASSWORD`, `GRAFANA_PASSWORD`
+- **The `INFLUXDB_TOKEN` value must match exactly** between `telegraf-ntp/.env` on
+  `raspberrypi-ntp` and `monitoring-stack/.env` on `raspberrypi-utility` — it's the same InfluxDB
+  admin token (set via `DOCKER_INFLUXDB_INIT_ADMIN_TOKEN` at first container boot), used by both
+  the writer (the Pi pushing metrics) and the instance itself.
+- `.env.example` files in this repo are tracked in git and contain placeholders only —
+  `.gitignore` blocks `.env`/`.env.*` generally but explicitly excepts `.env.example` so the
+  templates survive while real secrets don't.
+- `DOCKER_INFLUXDB_INIT_*` variables only take effect on a container's **first boot** against an
+  empty data volume — editing `.env` after InfluxDB already has data won't rotate the token or
+  password on the running instance. Rotating requires either wiping the volume (destroys data) or
+  changing it through InfluxDB's own UI/CLI and then updating `.env` on both Pis to match.
+- Never commit real tokens, passwords, or keys.
 
 ---
 
@@ -127,7 +195,7 @@ chronyc tracking
 # Check GPS fix and satellites
 cgps
 gpsmon
-gpspipe -w -n 5 | grep SKY | python3 -m json.tool
+gpspipe -w -n 20 | grep -E '"class":"(SKY|TPV)"'
 
 # Check NTP clients
 sudo chronyc clients
@@ -138,6 +206,18 @@ docker logs telegraf --tail 20
 # Check cron output
 sudo grep chrony /var/log/syslog | tail -10
 sudo grep gps /var/log/syslog | tail -10
+
+# Manually test the push scripts (silent exit = success)
+sudo /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh
+sudo /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh
+```
+
+Check recent writes directly in InfluxDB (Data Explorer → Script Editor, or `influx query`):
+
+```sql
+from(bucket: "ntp")
+  |> range(start: -5m)
+  |> filter(fn: (r) => r._measurement == "gps_tpv" or r._measurement == "gps_sky" or r._measurement == "gps_satellites")
 ```
 
 ---
