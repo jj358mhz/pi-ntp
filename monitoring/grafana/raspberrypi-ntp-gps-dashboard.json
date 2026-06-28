@@ -5,8 +5,8 @@
     "name": "raspberrypi-ntp-gps-constellation",
     "namespace": "default",
     "uid": "067ed4a6-4f4b-44d3-86eb-9b12258212bb",
-    "resourceVersion": "1782618834881991",
-    "generation": 18,
+    "resourceVersion": "1782625782215984",
+    "generation": 19,
     "creationTimestamp": "2026-06-14T03:46:42Z",
     "labels": {
       "grafana.app/deprecatedInternalID": "3355748530610176"
@@ -16,7 +16,7 @@
       "grafana.app/folder": "bfpnbdzs8b6yod",
       "grafana.app/saved-from-ui": "Grafana v13.1.0 (b309c9bb3b)",
       "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-28T03:53:54Z",
+      "grafana.app/updatedTimestamp": "2026-06-28T05:49:42Z",
       "grafana.app/folderTitle": "Raspberry Pi Monitoring",
       "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
     }
@@ -1431,7 +1431,7 @@
         "spec": {
           "id": 9,
           "title": "DOP Values Over Time",
-          "description": "Dilution of Precision trends — lower is better",
+          "description": "Four Dilution of Precision metrics plotted together: HDOP (horizontal), TDOP (time), GDOP (geometric), PDOP (position). All are unitless multipliers describing how much your satellite geometry amplifies measurement error — lower is better, with values under ~2 considered good and above ~5 indicating poor sky geometry (e.g. obstructions, very few satellites). TDOP specifically tracks timing accuracy and is the one most relevant to this server's role as an NTP source.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
