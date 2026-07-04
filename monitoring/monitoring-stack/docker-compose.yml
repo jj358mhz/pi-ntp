@@ -25,11 +25,46 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
     environment:
+      # Authentication & authorization
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
+
+      # Server / networking
+      - GF_SERVER_ROOT_URL=http://192.168.1.248:3000/
+
+      # Security posture (relaxed for LAN iframe embed)
+      - GF_SECURITY_CONTENT_SECURITY_POLICY=false
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_PANELS_DISABLE_SANITIZE_HTML=true
+
+      # Plugins
+      - GF_INSTALL_PLUGINS=snuids-radar-panel,fatcloud-windrose-panel
     depends_on:
       - influxdb
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    hostname: cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    ports:
+      - 8082:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+      - /etc/machine-id:/etc/machine-id:ro
+    command:
+      - '--housekeeping_interval=30s'
+      - '--docker_only=true'
+      - '--store_container_labels=false'
+    mem_limit: 256M
 
 volumes:
   influxdb-data:
