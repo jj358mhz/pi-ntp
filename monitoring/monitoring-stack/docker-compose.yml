@@ -33,7 +33,7 @@ services:
       - GF_SERVER_ROOT_URL=https://grafana.telcomjj.com/
       - GF_SERVER_DOMAIN=grafana.telcomjj.com
 
-      # OIDC via Authentik (Stage 2)
+      # OIDC via Authentik (Stage 1)
       - GF_AUTH_GENERIC_OAUTH_ENABLED=true
       - GF_AUTH_GENERIC_OAUTH_NAME=Authentik
       - GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP=true
@@ -45,6 +45,11 @@ services:
       - GF_AUTH_GENERIC_OAUTH_API_URL=https://auth.telcomjj.com/application/o/userinfo/
       - GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH=contains(groups[*], 'grafana-admins') && 'Admin' || 'Viewer'
       - GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN=true
+      - GF_AUTH_GENERIC_OAUTH_SIGNOUT_REDIRECT_URL=https://auth.telcomjj.com/application/o/grafana/end-session/
+
+      # Kill the password form — OAuth is the only path
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_OAUTH_AUTO_LOGIN=true
 
       # Security posture (relaxed for LAN iframe embed)
       - GF_SECURITY_CONTENT_SECURITY_POLICY=false
