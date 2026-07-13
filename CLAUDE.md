@@ -39,8 +39,10 @@ GPS module: Waveshare NEO-M8T GNSS Timing HAT (u-blox NEO-M8T)
 │   └── up                      → ~/bin/up on raspberrypi-ntp
 ├── tools/
 │   └── chrony_statistics.py    # Standalone analysis tool, runs locally
+├── portainer-agent/            # Deploys to raspberrypi-ntp as a Portainer Git-backed stack
+│   └── docker-compose.yml      # portainer_agent container, pinned image version
 └── monitoring/
-    ├── monitoring-stack/       # Deploys to raspberrypi-utility via Portainer
+    ├── monitoring-stack/       # Deploys to raspberrypi-utility as a Portainer Git-backed stack
     │   └── .env.example        # Template — copy to .env on raspberrypi-utility, fill in real values
     ├── telegraf-ntp/           # Deploys to raspberrypi-ntp via Portainer + cron
     │   └── .env.example        # Template — copy to .env on raspberrypi-ntp, fill in real token
@@ -54,7 +56,8 @@ GPS module: Waveshare NEO-M8T GNSS Timing HAT (u-blox NEO-M8T)
 - `gpsd` — reads GPS module, exposes NMEA via shared memory
 - `chrony` — NTP server, disciplined by GPS PPS
 - `telegraf` (Docker) — ships chrony metrics and CPU temp to InfluxDB
-- `portainer_agent` (Docker) — Portainer management
+- `portainer_agent` (Docker) — Portainer management; defined in `portainer-agent/docker-compose.yml`,
+  deployed as a Portainer Git-backed stack (see Making Changes below)
 - `cron` — runs scripts every minute:
     - `push_chrony_clients.sh` — NTP client metrics
     - `push_gps_satellites.sh` — GPS constellation + fix metrics (via gpsd)
@@ -62,7 +65,8 @@ GPS module: Waveshare NEO-M8T GNSS Timing HAT (u-blox NEO-M8T)
 ## Key Services on raspberrypi-utility
 
 - `influxdb` (Docker) — time series database, bucket: `ntp`
-- `grafana` (Docker) — dashboards
+- `grafana` (Docker) — dashboards, OIDC login via Authentik (see Authentication below)
+- `cadvisor` (Docker) — Docker container resource metrics, port 8082
 - `portainer` (Docker) — container management UI
 
 ---
@@ -87,6 +91,17 @@ timestamp-uncertainty figure over NMEA. Treat `ept` as informational only; `mode
 ---
 
 ## Making Changes
+
+### Portainer Git-backed stacks (monitoring-stack, portainer-agent)
+
+`monitoring/monitoring-stack/` and `portainer-agent/` are each deployed in Portainer as a
+Git-backed stack pointed at this repo, with polling enabled — Portainer periodically checks the
+repo and **auto-redeploys on changes to the relevant `docker-compose.yml`**, no manual `docker
+compose up` or copy step required. A commit + push to `main` is enough to ship a change to these
+stacks. Env vars (`INFLUXDB_TOKEN`, `INFLUXDB_PASSWORD`, `GRAFANA_PASSWORD`,
+`AUTHENTIK_GRAFANA_SECRET`) are still set manually in the Portainer stack UI, not read from a
+committed `.env`. This is a different model from the telegraf-ntp cron scripts below, which are
+manually copied and do **not** auto-sync.
 
 ### Config file changes
 
@@ -169,7 +184,8 @@ sudo /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh   # manual test — 
     - `raspberrypi-utility`: same directory as the monitoring-stack `docker-compose.yml`
       (Portainer-managed; find current path with
       `sudo find / -iname docker-compose.yml 2>/dev/null | grep -v '/proc\|/sys'`) →
-      `INFLUXDB_TOKEN`, `INFLUXDB_PASSWORD`, `GRAFANA_PASSWORD`
+      `INFLUXDB_TOKEN`, `INFLUXDB_PASSWORD`, `GRAFANA_PASSWORD`, `AUTHENTIK_GRAFANA_SECRET`
+      (the last is the Authentik OIDC provider's client secret for Grafana — see Authentication below)
 - **The `INFLUXDB_TOKEN` value must match exactly** between `telegraf-ntp/.env` on
   `raspberrypi-ntp` and `monitoring-stack/.env` on `raspberrypi-utility` — it's the same InfluxDB
   admin token (set via `DOCKER_INFLUXDB_INIT_ADMIN_TOKEN` at first container boot), used by both
@@ -182,6 +198,25 @@ sudo /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh   # manual test — 
   password on the running instance. Rotating requires either wiping the volume (destroys data) or
   changing it through InfluxDB's own UI/CLI and then updating `.env` on both Pis to match.
 - Never commit real tokens, passwords, or keys.
+
+---
+
+## Authentication
+
+Grafana on `raspberrypi-utility` is behind Caddy at `https://grafana.telcomjj.com/` and uses
+Authentik (`https://auth.telcomjj.com/`) as its OIDC provider — configured via
+`GF_AUTH_GENERIC_OAUTH_*` env vars in `monitoring/monitoring-stack/docker-compose.yml`.
+
+- `GF_AUTH_DISABLE_LOGIN_FORM=true` + `GF_AUTH_OAUTH_AUTO_LOGIN=true`: the password login form is
+  removed and visiting Grafana redirects straight to Authentik — OAuth is the only normal path in.
+- Role mapping: Authentik group `grafana-admins` → Grafana `Admin`, everyone else → `Viewer`
+  (`GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH`).
+- Sign-out also ends the Authentik-side session (`GF_AUTH_GENERIC_OAUTH_SIGNOUT_REDIRECT_URL`), not
+  just the Grafana cookie.
+- **Break-glass:** if Authentik is unavailable, re-enable the password form by setting
+  `GF_AUTH_DISABLE_LOGIN_FORM=false` in the Portainer stack env and redeploying, then
+  `docker exec grafana grafana cli admin reset-admin-password <newpass>`. `GRAFANA_PASSWORD` in
+  `.env` is otherwise unused day-to-day now that OAuth is the primary path.
 
 ---
 

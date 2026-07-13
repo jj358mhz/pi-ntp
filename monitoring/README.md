@@ -34,10 +34,12 @@ raspberrypi-utility (192.168.1.248)
 │       ├── measurement: gps_sky              (satellite count + DOP values)
 │       ├── measurement: gps_satellites       (per-satellite signal strength + status)
 │       └── measurement: gps_tpv              (fix mode + time/position error estimates)
-└── Grafana container
-    ├── Dashboard: raspberrypi-ntp — GPS Stratum 1 NTP Server
-    ├── Dashboard: raspberrypi-ntp — NTP Clients
-    └── Dashboard: raspberrypi-ntp — GPS Constellation
+├── Grafana container
+│   ├── OIDC login via Authentik (https://auth.telcomjj.com/), behind Caddy at grafana.telcomjj.com
+│   ├── Dashboard: raspberrypi-ntp — GPS Stratum 1 NTP Server
+│   ├── Dashboard: raspberrypi-ntp — NTP Clients
+│   └── Dashboard: raspberrypi-ntp — GPS Constellation
+└── cAdvisor container — Docker container resource metrics, port 8082
 ```
 
 ---
@@ -66,21 +68,32 @@ to it.
 
 ### Step 2 — Deploy monitoring stack on `raspberrypi-utility`
 
+This stack is deployed as a **Git-backed Portainer stack** pointed at this repo, with polling
+enabled — Portainer periodically re-pulls `monitoring-stack/docker-compose.yml` and redeploys
+automatically on changes, so a commit + push to `main` ships the change without a manual
+`docker compose up`. Environment variables are still set by hand in the Portainer stack UI, not
+read from a committed `.env`.
+
 In Portainer → `local` environment → Stacks → Add Stack:
 
 - Name: `monitoring`
-- Paste contents of [`monitoring-stack/docker-compose.yml`](monitoring-stack/docker-compose.yml)
+- Repository: this repo, path `monitoring-stack/docker-compose.yml`, polling enabled
 - Add environment variables (Advanced mode):
 
 ```
 INFLUXDB_TOKEN=your-generated-token
 INFLUXDB_PASSWORD=your-strong-password
 GRAFANA_PASSWORD=your-strong-password
+AUTHENTIK_GRAFANA_SECRET=your-authentik-oidc-client-secret
 ```
 
-**Note:** these are read by `DOCKER_INFLUXDB_INIT_*` env vars in the compose file, which only take
-effect on the container's **first boot** against an empty data volume. Changing them later won't
-rotate anything on an already-initialized instance.
+**Note:** `INFLUXDB_TOKEN`/`INFLUXDB_PASSWORD` are read by `DOCKER_INFLUXDB_INIT_*` env vars in the
+compose file, which only take effect on the container's **first boot** against an empty data
+volume. Changing them later won't rotate anything on an already-initialized instance.
+
+**Grafana auth:** login is OAuth-only via Authentik (`GF_AUTH_DISABLE_LOGIN_FORM=true`,
+`GF_AUTH_OAUTH_AUTO_LOGIN=true`) — `GRAFANA_PASSWORD` is a break-glass fallback only, not used
+day-to-day. See `CLAUDE.md` → Authentication for the full OIDC config and break-glass steps.
 
 ### Step 3 — Create Telegraf config on `raspberrypi-ntp`
 
@@ -177,7 +190,7 @@ Dashboards → New → Import → Upload JSON file:
 monitoring/
 ├── README.md
 ├── monitoring-stack/
-│   ├── docker-compose.yml          # InfluxDB v2 + Grafana (raspberrypi-utility)
+│   ├── docker-compose.yml          # InfluxDB v2 + Grafana + cAdvisor (raspberrypi-utility)
 │   └── .env.example
 ├── telegraf-ntp/
 │   ├── docker-compose.yml          # Telegraf container (raspberrypi-ntp)

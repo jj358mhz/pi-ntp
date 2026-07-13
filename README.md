@@ -210,12 +210,26 @@ sudo chronyc serverstats
 ├── tools/
 │   ├── chrony_statistics.py        # Parse and plot chrony statistics log
 │   └── requirements.txt            # Python dependencies for chrony_statistics.py
+├── portainer-agent/
+│   └── docker-compose.yml          # Portainer agent (deploy on raspberrypi-ntp)
 └── monitoring/                     # Telegraf + InfluxDB + Grafana monitoring stack
     ├── README.md                   # Monitoring setup and metrics reference
     ├── monitoring-stack/           # InfluxDB v2 + Grafana (deploy on raspberrypi-utility)
     ├── telegraf-ntp/               # Telegraf + cron scripts (deploy on raspberrypi-ntp)
     └── grafana/                    # Dashboard JSON files + alert rules
 ```
+
+---
+
+## Portainer Agent
+
+`raspberrypi-ntp` runs a Portainer agent so it can be managed as a remote environment from the
+Portainer instance on `raspberrypi-utility`. It's deployed as a Git-backed Portainer stack pointed
+at [`portainer-agent/docker-compose.yml`](portainer-agent/docker-compose.yml) — Portainer polls
+this repo and redeploys automatically when that file changes, no manual `docker compose up` step.
+
+To set up initially: in Portainer on `raspberrypi-utility` → Environments → Add environment →
+Docker → Agent, pointing at `raspberrypi-ntp:9001`.
 
 ---
 
