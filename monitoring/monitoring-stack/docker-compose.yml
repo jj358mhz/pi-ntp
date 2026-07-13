@@ -15,7 +15,6 @@ services:
       - DOCKER_INFLUXDB_INIT_ORG=homelab
       - DOCKER_INFLUXDB_INIT_BUCKET=ntp
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
-
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
@@ -30,8 +29,22 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
 
-      # Server / networking
-      - GF_SERVER_ROOT_URL=http://192.168.1.248:3000/
+      # Server / networking — behind Caddy at grafana.telcomjj.com
+      - GF_SERVER_ROOT_URL=https://grafana.telcomjj.com/
+      - GF_SERVER_DOMAIN=grafana.telcomjj.com
+
+      # OIDC via Authentik (Stage 2)
+      - GF_AUTH_GENERIC_OAUTH_ENABLED=true
+      - GF_AUTH_GENERIC_OAUTH_NAME=Authentik
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP=true
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_ID=uoGadBVURCYsNNaPajVQePLH23KkaCxFflQZF6vm
+      - GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET=${AUTHENTIK_GRAFANA_SECRET}
+      - GF_AUTH_GENERIC_OAUTH_SCOPES=openid profile email
+      - GF_AUTH_GENERIC_OAUTH_AUTH_URL=https://auth.telcomjj.com/application/o/authorize/
+      - GF_AUTH_GENERIC_OAUTH_TOKEN_URL=https://auth.telcomjj.com/application/o/token/
+      - GF_AUTH_GENERIC_OAUTH_API_URL=https://auth.telcomjj.com/application/o/userinfo/
+      - GF_AUTH_GENERIC_OAUTH_ROLE_ATTRIBUTE_PATH=contains(groups[*], 'grafana-admins') && 'Admin' || 'Viewer'
+      - GF_AUTH_GENERIC_OAUTH_ALLOW_ASSIGN_GRAFANA_ADMIN=true
 
       # Security posture (relaxed for LAN iframe embed)
       - GF_SECURITY_CONTENT_SECURITY_POLICY=false
@@ -42,7 +55,6 @@ services:
       - GF_INSTALL_PLUGINS=snuids-radar-panel,fatcloud-windrose-panel
     depends_on:
       - influxdb
-
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
@@ -65,7 +77,6 @@ services:
       - '--docker_only=true'
       - '--store_container_labels=false'
     mem_limit: 256M
-
 volumes:
   influxdb-data:
   influxdb-config:
