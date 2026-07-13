@@ -1,7 +1,6 @@
-# GitOps test: 2026-07-12 — verify Portainer auto-redeploy
 services:
   influxdb:
-    image: influxdb:2-alpine
+    image: influxdb:2.9.1-alpine
     container_name: influxdb
     restart: unless-stopped
     ports:
@@ -17,7 +16,7 @@ services:
       - DOCKER_INFLUXDB_INIT_BUCKET=ntp
       - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:13.1.0
     container_name: grafana
     restart: unless-stopped
     ports:
@@ -62,7 +61,7 @@ services:
     depends_on:
       - influxdb
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.55.1
     container_name: cadvisor
     hostname: cadvisor
     restart: unless-stopped
