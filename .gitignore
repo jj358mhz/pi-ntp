@@ -70,3 +70,4 @@ com.apple.metadata:*
 
 # Windows
 Thumbs.db
+.env
