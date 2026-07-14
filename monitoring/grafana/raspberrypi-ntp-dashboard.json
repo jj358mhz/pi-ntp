@@ -3,23 +3,10 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "raspberrypi-ntp-chrony-v3",
-    "namespace": "default",
-    "uid": "342c310c-6ea0-416f-97d3-23c2e80416cc",
-    "resourceVersion": "1782184429856009",
-    "generation": 23,
+    "generation": 26,
     "creationTimestamp": "2026-06-07T05:54:43Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "851247351242752"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:bfocldg2muww0d",
-      "grafana.app/folder": "bfpnbdzs8b6yod",
-      "grafana.app/saved-from-ui": "Grafana v13.0.2 (3fcdbc5a)",
-      "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-23T03:13:49Z",
-      "grafana.app/folderTitle": "Raspberry Pi Monitoring",
-      "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
-    }
+    "labels": {},
+    "annotations": {}
   },
   "spec": {
     "annotations": [
@@ -30,10 +17,10 @@
             "kind": "DataQuery",
             "group": "grafana",
             "version": "v0",
-            "datasource": {
-              "name": "-- Grafana --"
-            },
-            "spec": {}
+            "spec": {},
+            "labels": {
+              "grafana.app/export-label": "grafana-1"
+            }
           },
           "enable": true,
           "hide": true,
@@ -52,7 +39,7 @@
         "spec": {
           "id": 1,
           "title": "Stratum",
-          "description": "NTP stratum level. 1 = locked to GPS PPS reference (best). \u22652 means relying on network peers instead of GPS.",
+          "description": "NTP stratum level. 1 = locked to GPS PPS reference (best). ≥2 means relying on network peers instead of GPS.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -65,11 +52,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r._field == \"system_time\" and r.host == \"raspberrypi-ntp\")\n  |> last()\n  |> map(fn: (r) => ({_value: int(v: r.stratum), _time: r._time}))"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -84,7 +72,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -158,11 +146,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_sources\" and r._field == \"latest_measurement\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"peer\"])\n  |> yield(name: \"mean\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -177,7 +166,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -190,6 +179,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -277,11 +268,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_sources\" and r._field == \"reachability\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"peer\"])\n  |> yield(name: \"last\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -296,7 +288,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -308,6 +300,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -397,11 +391,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_sourcestats\" and r._field == \"offset\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"peer\"])\n  |> yield(name: \"mean\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -416,7 +411,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -429,6 +424,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -503,7 +500,7 @@
         "spec": {
           "id": 13,
           "title": "Source Residual Frequency (by peer)",
-          "description": "Residual frequency error per source after regression correction \u2014 how well each source's clock rate is characterized.",
+          "description": "Residual frequency error per source after regression correction — how well each source's clock rate is characterized.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -516,11 +513,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_sourcestats\" and r._field == \"residual_frequency\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"peer\"])\n  |> yield(name: \"mean\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -535,7 +533,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -548,6 +546,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -622,7 +622,7 @@
         "spec": {
           "id": 14,
           "title": "Source Std Dev (by peer)",
-          "description": "Standard deviation of offset samples per source \u2014 how noisy/consistent each source's measurements are.",
+          "description": "Standard deviation of offset samples per source — how noisy/consistent each source's measurements are.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -635,11 +635,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_sourcestats\" and r._field == \"stddev\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"peer\"])\n  |> yield(name: \"mean\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -654,7 +655,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -667,6 +668,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -754,11 +757,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_sourcestats\" and r._field == \"samples\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"peer\"])\n  |> yield(name: \"last\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -773,7 +777,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -785,6 +789,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -854,132 +860,12 @@
           }
         }
       },
-      "panel-16": {
-        "kind": "Panel",
-        "spec": {
-          "id": 16,
-          "title": "CPU Temperature (\u00b0C)",
-          "description": "Raw cpu_temp values are millidegrees; this panel divides by 1000.\nAlert thresholds: warning \u226570\u00b0C, critical \u226580\u00b0C (see Alerting in monitoring/README.md)",
-          "links": [],
-          "data": {
-            "kind": "QueryGroup",
-            "spec": {
-              "queries": [
-                {
-                  "kind": "PanelQuery",
-                  "spec": {
-                    "query": {
-                      "kind": "DataQuery",
-                      "group": "influxdb",
-                      "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
-                      "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu_temp\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 1000.0}))\n  |> keep(columns: [\"_time\", \"_value\"])"
-                      }
-                    },
-                    "refId": "A",
-                    "hidden": false
-                  }
-                }
-              ],
-              "transformations": [],
-              "queryOptions": {}
-            }
-          },
-          "vizConfig": {
-            "kind": "VizConfig",
-            "group": "timeseries",
-            "version": "13.0.2",
-            "spec": {
-              "options": {
-                "annotations": {
-                  "clustering": -1,
-                  "multiLane": false
-                },
-                "legend": {
-                  "calcs": [
-                    "min",
-                    "max",
-                    "mean"
-                  ],
-                  "displayMode": "table",
-                  "placement": "bottom",
-                  "showLegend": true
-                },
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
-              },
-              "fieldConfig": {
-                "defaults": {
-                  "unit": "",
-                  "thresholds": {
-                    "mode": "absolute",
-                    "steps": [
-                      {
-                        "value": 0,
-                        "color": "green"
-                      },
-                      {
-                        "value": 80,
-                        "color": "red"
-                      }
-                    ]
-                  },
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "custom": {
-                    "axisBorderShow": false,
-                    "axisCenteredZero": false,
-                    "axisColorMode": "text",
-                    "axisLabel": "",
-                    "axisPlacement": "auto",
-                    "barAlignment": 0,
-                    "barWidthFactor": 0.6,
-                    "drawStyle": "line",
-                    "fillOpacity": 0,
-                    "gradientMode": "none",
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    },
-                    "insertNulls": false,
-                    "lineInterpolation": "linear",
-                    "lineWidth": 1,
-                    "pointSize": 5,
-                    "scaleDistribution": {
-                      "type": "linear"
-                    },
-                    "showPoints": "auto",
-                    "showValues": false,
-                    "spanNulls": false,
-                    "stacking": {
-                      "group": "A",
-                      "mode": "none"
-                    },
-                    "thresholdsStyle": {
-                      "mode": "off"
-                    }
-                  }
-                },
-                "overrides": []
-              }
-            }
-          }
-        }
-      },
       "panel-17": {
         "kind": "Panel",
         "spec": {
           "id": 17,
           "title": "RTC Battery Voltage (V)",
-          "description": "Pi 5 onboard RTC backup battery (J5 connector), trickle-charged to a 3.0V target via dtparam=rtc_bbat_vchg. Raw values are microvolts; this panel divides by 1,000,000. Distinct from the GPS module's ML1220 backup cell, which has no software-readable voltage. No alert thresholds set yet \u2014 pending a baseline observation period.",
+          "description": "Pi 5 onboard RTC backup battery (J5 connector), trickle-charged to a 3.0V target via dtparam=rtc_bbat_vchg. Raw values are microvolts; this panel divides by 1,000,000. Distinct from the GPS module's ML1220 backup cell, which has no software-readable voltage. No alert thresholds set yet — pending a baseline observation period.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -992,11 +878,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"rtc_battery_voltage\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 1000000.0}))\n  |> keep(columns: [\"_time\", \"_value\"])"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1011,7 +898,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -1025,6 +912,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -1096,7 +985,7 @@
         "spec": {
           "id": 3,
           "title": "System Time Offset",
-          "description": "Current offset between system clock and true time per chrony. Should stay in the ns\u2013low \u00b5s range when GPS-locked.",
+          "description": "Current offset between system clock and true time per chrony. Should stay in the ns–low µs range when GPS-locked.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1109,11 +998,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r._field == \"system_time\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1128,7 +1018,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -1183,7 +1073,7 @@
         "spec": {
           "id": 4,
           "title": "RMS Offset",
-          "description": "Long-term RMS average of clock offset \u2014 a steadier indicator of sync quality than the instantaneous System Time Offset.",
+          "description": "Long-term RMS average of clock offset — a steadier indicator of sync quality than the instantaneous System Time Offset.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1196,11 +1086,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r._field == \"rms_offset\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1215,7 +1106,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -1283,11 +1174,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r._field == \"frequency\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1302,7 +1194,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -1370,11 +1262,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r._field == \"skew\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1389,7 +1282,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -1444,7 +1337,7 @@
         "spec": {
           "id": 7,
           "title": "Root Dispersion",
-          "description": "Accumulated uncertainty in time traced back through the reference chain to GPS/PPS. Should stay in the \u00b5s range.",
+          "description": "Accumulated uncertainty in time traced back through the reference chain to GPS/PPS. Should stay in the µs range.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1457,11 +1350,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r._field == \"root_dispersion\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1476,7 +1370,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "stat",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "colorMode": "background",
@@ -1531,7 +1425,7 @@
         "spec": {
           "id": 8,
           "title": "System / Last / RMS Offset",
-          "description": "Combined view of current, most-recent, and long-term RMS offset \u2014 useful for spotting trends or instability.",
+          "description": "Combined view of current, most-recent, and long-term RMS offset — useful for spotting trends or instability.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1544,11 +1438,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"system_time\" or r._field == \"last_offset\" or r._field == \"rms_offset\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n  |> yield(name: \"mean\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1563,7 +1458,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -1578,6 +1473,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -1652,7 +1549,7 @@
         "spec": {
           "id": 9,
           "title": "Frequency / Residual Freq / Skew",
-          "description": "Combined view of frequency error, residual frequency, and skew \u2014 useful for diagnosing oscillator drift.",
+          "description": "Combined view of frequency error, residual frequency, and skew — useful for diagnosing oscillator drift.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1665,11 +1562,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"frequency\" or r._field == \"residual_freq\" or r._field == \"skew\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> keep(columns: [\"_time\", \"_value\", \"_field\"])\n  |> yield(name: \"mean\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1684,7 +1582,7 @@
           "vizConfig": {
             "kind": "VizConfig",
             "group": "timeseries",
-            "version": "13.0.2",
+            "version": "13.1.0",
             "spec": {
               "options": {
                 "annotations": {
@@ -1699,6 +1597,8 @@
                     "last"
                   ],
                   "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
                   "placement": "bottom",
                   "showLegend": true
                 },
@@ -1949,7 +1849,7 @@
                         "height": 5,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-16"
+                          "name": "panel-14"
                         }
                       }
                     },
@@ -2069,7 +1969,7 @@
       "hideTimepicker": false,
       "fiscalYearStartMonth": 0
     },
-    "title": "raspberrypi-ntp \u2014 GPS Stratum 1 NTP Server",
+    "title": "raspberrypi-ntp — GPS Stratum 1 NTP Server",
     "variables": []
   }
 }

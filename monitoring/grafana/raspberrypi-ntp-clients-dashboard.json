@@ -3,23 +3,10 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "raspberrypi-ntp-clients-v2",
-    "namespace": "default",
-    "uid": "d93ebe1d-14d2-4702-830e-999d2fb81421",
-    "resourceVersion": "1782518789200987",
-    "generation": 23,
+    "generation": 33,
     "creationTimestamp": "2026-06-08T01:00:26Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "1139578907697152"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:bfocldg2muww0d",
-      "grafana.app/folder": "bfpnbdzs8b6yod",
-      "grafana.app/saved-from-ui": "Grafana v13.1.0 (b309c9bb3b)",
-      "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-27T00:06:29Z",
-      "grafana.app/folderTitle": "Raspberry Pi Monitoring",
-      "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
-    }
+    "labels": {},
+    "annotations": {}
   },
   "spec": {
     "annotations": [
@@ -30,10 +17,10 @@
             "kind": "DataQuery",
             "group": "grafana",
             "version": "v0",
-            "datasource": {
-              "name": "-- Grafana --"
-            },
-            "spec": {}
+            "spec": {},
+            "labels": {
+              "grafana.app/export-label": "grafana-1"
+            }
           },
           "enable": true,
           "hide": true,
@@ -65,11 +52,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony\" and r._field == \"system_time\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -226,11 +214,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> last()\n  |> group()\n  |> count()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -304,11 +293,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> last()\n  |> group()\n  |> sum()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -382,11 +372,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_drops\" and r.host == \"raspberrypi-ntp\")\n  |> last()\n  |> group()\n  |> sum()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -464,11 +455,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "import \"strings\"\n\nfrom(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> last()\n  |> map(fn: (r) => ({\n      _value: r._value,\n      _time: r._time,\n      _field: if strings.hasPrefix(v: r.client, prefix: \"192.168.1.\") then \"LAN-Core\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.10.\") then \"LAN-Corp\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.20.\") then \"LAN-Guest\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.30.\") then \"LAN-Security\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.40.\") then \"LAN-IoT\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.53.\") then \"LAN-DNS\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.70.\") then \"DMZ-Scanner\"\n              else if strings.hasPrefix(v: r.client, prefix: \"192.168.123.\") then \"LAN-NTP\"\n              else \"Other\"\n  }))\n  |> group(columns: [\"_field\"])\n  |> sum(column: \"_value\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -645,11 +637,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"last\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -780,11 +773,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"ntp_requests\" or r._field == \"ntp_drops\" or r._field == \"ntp_poll\" or r._field == \"last_rx\")\n  |> last()\n  |> group(columns: [\"client\", \"_field\"])\n  |> pivot(rowKey: [\"client\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> keep(columns: [\"client\", \"ntp_requests\", \"ntp_drops\", \"ntp_poll\", \"last_rx\"])\n  |> sort(columns: [\"ntp_requests\"], desc: true)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -933,8 +927,8 @@
         "kind": "Panel",
         "spec": {
           "id": 8,
-          "title": "NTP Requests per Day (by Client)",
-          "description": "Daily NTP request count per client, derived from chrony's cumulative request counter. Uses increase() + difference() to correctly handle counter resets from chronyd restarts, so daily totals stay accurate even if the service restarts mid-day. Always shows the trailing 7 complete days, regardless of the dashboard's time range picker.",
+          "title": "NTP Requests (by Client)",
+          "description": "NTP request count per client, derived from chrony's cumulative request counter. Uses increase() + difference() to correctly handle counter resets from chronyd restarts, so totals stay accurate even if the service restarts mid-interval. Follows the dashboard's time range picker, with bucket size scaled automatically to the selected range (floored at 1 hour).",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -947,11 +941,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> group(columns: [\"client\"])\n  |> increase()\n  |> aggregateWindow(every: 1d, fn: last, createEmpty: false)\n  |> difference(nonNegative: true)\n  |> group()\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"client\"], valueColumn: \"_value\")\n  |> yield(name: \"daily_by_client\")"
+                        "query": "// Never bucket finer than 1h, even when zoomed in — keeps sparse\n// pollers from collapsing into a 0/1 forest at narrow time ranges.\nminWindow = if int(v: v.windowPeriod) < int(v: 1h) then 1h else v.windowPeriod\n\nfrom(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) =>\n      r._measurement == \"chrony_clients\" and\n      r._field == \"ntp_requests\" and\n      r.host == \"raspberrypi-ntp\"\n  )\n  |> group(columns: [\"client\"])\n  |> increase()\n  |> aggregateWindow(every: minWindow, fn: last, createEmpty: false)\n  |> difference(nonNegative: true)\n  |> group()\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"client\"], valueColumn: \"_value\")\n  |> yield(name: \"requests_by_client\")"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -982,6 +977,135 @@
                   "overflow": "ellipsis",
                   "placement": "right",
                   "showLegend": true
+                },
+                "orientation": "auto",
+                "showValue": "auto",
+                "stacking": "none",
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                },
+                "xField": "time",
+                "xTickLabelRotation": 0,
+                "xTickLabelSpacing": 100
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": null,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "fillOpacity": 100,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "lineWidth": 0,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "off"
+                    }
+                  },
+                  "fieldMinMax": false
+                },
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byType",
+                      "options": "time"
+                    },
+                    "properties": [
+                      {
+                        "id": "unit",
+                        "value": "time:MM/DD HH:mm"
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "panel-9": {
+        "kind": "Panel",
+        "spec": {
+          "id": 9,
+          "title": "NTP Requests per Day (by Client)",
+          "description": "Daily NTP request count per client, derived from chrony's cumulative request counter. Uses increase() + difference() to correctly handle counter resets from chronyd restarts, so daily totals stay accurate even if the service restarts mid-day. Always shows the trailing five (5) complete days, regardless of the dashboard's time range picker.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5d)\n  |> filter(fn: (r) => r._measurement == \"chrony_clients\" and r._field == \"ntp_requests\" and r.host == \"raspberrypi-ntp\")\n  |> group(columns: [\"client\"])\n  |> increase()\n  |> aggregateWindow(every: 1d, fn: last, createEmpty: false)\n  |> difference(nonNegative: true)\n  |> group()\n  |> pivot(rowKey: [\"_time\"], columnKey: [\"client\"], valueColumn: \"_value\")\n  |> yield(name: \"daily_by_client\")\n"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "barchart",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "barRadius": 0.05,
+                "barWidth": 0.95,
+                "fullHighlight": false,
+                "groupWidth": 0.8,
+                "legend": {
+                  "calcs": [
+                    "lastNotNull",
+                    "max"
+                  ],
+                  "displayMode": "table",
+                  "overflow": "ellipsis",
+                  "placement": "right",
+                  "showLegend": true,
+                  "sortBy": "Max",
+                  "sortDesc": true
                 },
                 "orientation": "auto",
                 "showValue": "auto",
@@ -1154,8 +1278,8 @@
                       "spec": {
                         "x": 0,
                         "y": 0,
-                        "width": 12,
-                        "height": 9,
+                        "width": 8,
+                        "height": 10,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-6"
@@ -1165,13 +1289,26 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 12,
+                        "x": 8,
                         "y": 0,
-                        "width": 12,
-                        "height": 9,
+                        "width": 8,
+                        "height": 10,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-8"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 16,
+                        "y": 0,
+                        "width": 8,
+                        "height": 10,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-9"
                         }
                       }
                     }

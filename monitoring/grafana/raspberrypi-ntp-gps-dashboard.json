@@ -3,23 +3,10 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "raspberrypi-ntp-gps-constellation",
-    "namespace": "default",
-    "uid": "067ed4a6-4f4b-44d3-86eb-9b12258212bb",
-    "resourceVersion": "1782625782215984",
-    "generation": 19,
+    "generation": 32,
     "creationTimestamp": "2026-06-14T03:46:42Z",
-    "labels": {
-      "grafana.app/deprecatedInternalID": "3355748530610176"
-    },
-    "annotations": {
-      "grafana.app/createdBy": "user:bfocldg2muww0d",
-      "grafana.app/folder": "bfpnbdzs8b6yod",
-      "grafana.app/saved-from-ui": "Grafana v13.1.0 (b309c9bb3b)",
-      "grafana.app/updatedBy": "user:bfocldg2muww0d",
-      "grafana.app/updatedTimestamp": "2026-06-28T05:49:42Z",
-      "grafana.app/folderTitle": "Raspberry Pi Monitoring",
-      "grafana.app/folderUrl": "/dashboards/f/bfpnbdzs8b6yod/raspberry-pi-monitoring"
-    }
+    "labels": {},
+    "annotations": {}
   },
   "spec": {
     "annotations": [
@@ -30,10 +17,10 @@
             "kind": "DataQuery",
             "group": "grafana",
             "version": "v0",
-            "datasource": {
-              "name": "-- Grafana --"
-            },
-            "spec": {}
+            "spec": {},
+            "labels": {
+              "grafana.app/export-label": "grafana-1"
+            }
           },
           "enable": true,
           "hide": true,
@@ -65,11 +52,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_sky\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"nSat\")\n  |> last()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -151,11 +139,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"el\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -275,11 +264,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"ss\" or r._field == \"el\" or r._field == \"az\" or r._field == \"used\")\n  |> last()\n  |> group(columns: [\"prn\", \"constellation\", \"_field\"])\n  |> pivot(rowKey: [\"prn\", \"constellation\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> map(fn: (r) => ({\n      r with\n      wiki_url: if r.constellation == \"GPS\" then \"https://en.wikipedia.org/wiki/List_of_GPS_satellites\"\n                else if r.constellation == \"GLONASS\" then \"https://en.wikipedia.org/wiki/List_of_GLONASS_satellites\"\n                else \"https://en.wikipedia.org/wiki/GNSS\"\n  }))\n  |> keep(columns: [\"prn\", \"used\", \"constellation\", \"ss\", \"el\", \"az\", \"wiki_url\"])\n  |> sort(columns: [\"ss\"], desc: true)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -498,11 +488,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_tpv\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"mode\")\n  |> last()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -611,11 +602,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_tpv\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"ept\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -721,6 +713,133 @@
           }
         }
       },
+      "panel-14": {
+        "kind": "Panel",
+        "spec": {
+          "id": 14,
+          "title": "CPU Temperature (°C)",
+          "description": "Raw cpu_temp values are millidegrees; this panel divides by 1000.\nAlert thresholds: warning ≥70°C, critical ≥80°C (see Alerting in monitoring/README.md)",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cpu_temp\" and r.host == \"raspberrypi-ntp\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> map(fn: (r) => ({r with _value: r._value / 1000.0}))\n  |> keep(columns: [\"_time\", \"_value\"])"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "timeseries",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "annotations": {
+                  "clustering": -1,
+                  "multiLane": false
+                },
+                "legend": {
+                  "calcs": [
+                    "min",
+                    "max",
+                    "mean"
+                  ],
+                  "displayMode": "table",
+                  "enableFacetedFilter": false,
+                  "overflow": "ellipsis",
+                  "placement": "bottom",
+                  "showLegend": true
+                },
+                "tooltip": {
+                  "hideZeros": false,
+                  "mode": "single",
+                  "sort": "none"
+                }
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "unit": "celsius",
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 70,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "palette-classic"
+                  },
+                  "custom": {
+                    "axisBorderShow": false,
+                    "axisCenteredZero": false,
+                    "axisColorMode": "text",
+                    "axisLabel": "",
+                    "axisPlacement": "auto",
+                    "barAlignment": 0,
+                    "barWidthFactor": 0.6,
+                    "drawStyle": "line",
+                    "fillOpacity": 0,
+                    "gradientMode": "none",
+                    "hideFrom": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": false
+                    },
+                    "insertNulls": false,
+                    "lineInterpolation": "linear",
+                    "lineWidth": 1,
+                    "pointSize": 5,
+                    "scaleDistribution": {
+                      "type": "linear"
+                    },
+                    "showPoints": "auto",
+                    "showValues": false,
+                    "spanNulls": false,
+                    "stacking": {
+                      "group": "A",
+                      "mode": "none"
+                    },
+                    "thresholdsStyle": {
+                      "mode": "dashed"
+                    }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
       "panel-2": {
         "kind": "Panel",
         "spec": {
@@ -739,11 +858,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_sky\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"uSat\")\n  |> last()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -825,11 +945,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_sky\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"hdop\")\n  |> last()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -911,11 +1032,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_sky\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"tdop\")\n  |> last()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -997,11 +1119,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_sky\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"gdop\")\n  |> last()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1083,11 +1206,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_sky\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"pdop\")\n  |> last()"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1169,11 +1293,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_sky\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"nSat\" or r._field == \"uSat\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1280,7 +1405,7 @@
         "spec": {
           "id": 8,
           "title": "Signal Strength by Satellite (dB-Hz)",
-          "description": "Signal strength per satellite PRN. Higher = better lock.",
+          "description": "Signal strength per satellite PRN. Higher = better lock. Solid lines = used in fix; dashed lines (----) = visible but not used.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1293,14 +1418,34 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"ss\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r.used == \"1\")\n  |> filter(fn: (r) => r._field == \"ss\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
+                    "hidden": false
+                  }
+                },
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r.used == \"0\")\n  |> filter(fn: (r) => r._field == \"ss\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
+                      }
+                    },
+                    "refId": "B",
                     "hidden": false
                   }
                 }
@@ -1397,25 +1542,19 @@
                 },
                 "overrides": [
                   {
-                    "__systemRef": "hideSeriesFrom",
                     "matcher": {
-                      "id": "byNames",
-                      "options": {
-                        "mode": "exclude",
-                        "names": [
-                          "GPS PRN32"
-                        ],
-                        "prefix": "All except:",
-                        "readOnly": true
-                      }
+                      "id": "byFrameRefID",
+                      "options": "B"
                     },
                     "properties": [
                       {
-                        "id": "custom.hideFrom",
+                        "id": "custom.lineStyle",
                         "value": {
-                          "legend": false,
-                          "tooltip": true,
-                          "viz": true
+                          "dash": [
+                            10,
+                            10
+                          ],
+                          "fill": "dash"
                         }
                       }
                     ]
@@ -1444,11 +1583,12 @@
                       "kind": "DataQuery",
                       "group": "influxdb",
                       "version": "v0",
-                      "datasource": {
-                        "name": "efodpma1sz474d"
-                      },
                       "spec": {
                         "query": "from(bucket: \"ntp\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"gps_sky\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"hdop\" or r._field == \"tdop\" or r._field == \"gdop\" or r._field == \"pdop\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
                       }
                     },
                     "refId": "A",
@@ -1720,6 +1860,32 @@
                           "name": "panel-8"
                         }
                       }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 18,
+                        "width": 24,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-10"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 26,
+                        "width": 24,
+                        "height": 6,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-14"
+                        }
+                      }
                     }
                   ]
                 }
@@ -1740,20 +1906,7 @@
                       "spec": {
                         "x": 0,
                         "y": 0,
-                        "width": 12,
-                        "height": 8,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-10"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 12,
-                        "y": 0,
-                        "width": 12,
+                        "width": 24,
                         "height": 8,
                         "element": {
                           "kind": "ElementReference",
