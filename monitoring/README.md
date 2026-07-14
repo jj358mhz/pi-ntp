@@ -119,14 +119,19 @@ INFLUXDB_TOKEN=your-generated-token
 
 ### Step 5 — Set up cron jobs on `raspberrypi-ntp`
 
+Scripts are symlinked from the git checkout — `git pull` on `raspberrypi-ntp` is sufficient to
+deploy future script changes, no manual copy needed.
+
 ```bash
-# Copy all scripts
-sudo cp telegraf-ntp/chrony_clients.sh /opt/docker/stacks/telegraf-ntp/
-sudo cp telegraf-ntp/push_chrony_clients.sh /opt/docker/stacks/telegraf-ntp/
-sudo cp telegraf-ntp/gps_satellites.py /opt/docker/stacks/telegraf-ntp/
-sudo cp telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/
-sudo chmod +x /opt/docker/stacks/telegraf-ntp/*.sh
-sudo chown root:root /opt/docker/stacks/telegraf-ntp/*.sh /opt/docker/stacks/telegraf-ntp/*.py
+# Clone the repo if not already present
+git clone https://github.com/jj358mhz/pi-ntp.git ~/git/pi-ntp
+
+# Symlink scripts from git checkout
+sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/chrony_clients.sh /opt/docker/stacks/telegraf-ntp/chrony_clients.sh
+sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/push_chrony_clients.sh /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh
+sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/gps_satellites.py /opt/docker/stacks/telegraf-ntp/gps_satellites.py
+sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh
+chmod +x ~/git/pi-ntp/monitoring/telegraf-ntp/*.sh ~/git/pi-ntp/monitoring/telegraf-ntp/*.py
 
 # Create .env with the real token (same value as Step 1)
 sudo cp telegraf-ntp/.env.example /opt/docker/stacks/telegraf-ntp/.env
@@ -146,10 +151,6 @@ echo "* * * * * root /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh" | s
 Both push scripts source `.env` for `INFLUXDB_TOKEN` at runtime and exit with a clear error
 (rather than silently writing unauthorized requests) if `.env` is missing or still has the
 placeholder value — if the manual test above fails, check `.env` first.
-
-**Note:** `/opt/docker/stacks/telegraf-ntp/` is a deployment path, not a git checkout — it does
-not auto-update on `git pull`. Re-run the relevant `cp`/`chmod`/`chown` lines above any time the
-scripts change in this repo.
 
 ### Step 6 — Add InfluxDB data source in Grafana
 
@@ -181,6 +182,8 @@ Dashboards → New → Import → Upload JSON file:
 - The GPS Constellation dashboard's "Current Satellite Status" table includes a data link on the
   `prn`/`constellation` column that opens the relevant Wikipedia satellite list (GPS or GLONASS)
   in a new tab — useful for looking up which physical satellite (SVN) a given PRN currently maps to
+- The Signal Strength panel uses two queries: solid lines = satellites used in fix (`used="1"`),
+  dashed lines = visible but not used (`used="0"`)
 
 ---
 
@@ -363,7 +366,7 @@ emitted.
 | `az`     | degrees | Azimuth                          |
 | `health` | integer | Satellite health (1=healthy)     |
 
-Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo/BeiDou/SBAS/QZSS), `used` (true/false — whether satellite is used in fix)
+Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo/BeiDou/SBAS/QZSS), `used` (`"0"` or `"1"` string tag — whether satellite is used in fix)
 
 ### `gps_tpv` measurement (fix status)
 

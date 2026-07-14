@@ -101,7 +101,7 @@ compose up` or copy step required. A commit + push to `main` is enough to ship a
 stacks. Env vars (`INFLUXDB_TOKEN`, `INFLUXDB_PASSWORD`, `GRAFANA_PASSWORD`,
 `AUTHENTIK_GRAFANA_SECRET`) are still set manually in the Portainer stack UI, not read from a
 committed `.env`. This is a different model from the telegraf-ntp cron scripts below, which are
-manually copied and do **not** auto-sync.
+symlinked from the git checkout.
 
 ### Config file changes
 
@@ -130,6 +130,8 @@ Current dashboards:
 - **raspberrypi-ntp — GPS Constellation** — satellite signal strength, DOP, fix status (`gps_tpv.mode`),
   GPS time error estimate, and sky coverage. "Current Satellite Status" table includes a data link
   on `prn`/`constellation` that opens the relevant Wikipedia satellite list (GPS or GLONASS) in a new tab.
+  Signal Strength panel uses two queries: solid lines = satellites used in fix (`used="1"`),
+  dashed lines = visible but not used (`used="0"`).
 
 ### Grafana alert rule changes
 
@@ -160,19 +162,27 @@ Located at `/opt/docker/stacks/telegraf-ntp/` on `raspberrypi-ntp`:
 
 Both push scripts source `/opt/docker/stacks/telegraf-ntp/.env` for `INFLUXDB_TOKEN` and will
 **fail loudly** (clear error to stderr, non-zero exit) if `.env` is missing or still contains the
-placeholder value — this is intentional, so a bad deploy is caught immediately in cron logs or a
+placeholder value — this is intentional - a bad deploy is caught immediately in cron logs or a
 manual test run rather than silently writing unauthorized requests.
 
-**Important:** `/opt/docker/stacks/telegraf-ntp/` on the Pi is a separate, manually-managed
-deployment path — it does **not** auto-sync from the git checkout. After `git pull`, scripts must
-be copied over by hand:
+**Important:** `/opt/docker/stacks/telegraf-ntp/` on the Pi uses symlinks pointing to the git
+checkout at `~/git/pi-ntp/monitoring/telegraf-ntp/`. A `git pull` on `raspberrypi-ntp` is
+sufficient to deploy script changes — no manual copy step needed.
+
+To verify or recreate the symlinks:
 
 ```bash
-sudo cp ~/git/pi-ntp/monitoring/telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/
-sudo cp ~/git/pi-ntp/monitoring/telegraf-ntp/gps_satellites.py /opt/docker/stacks/telegraf-ntp/
-sudo chown root:root /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/gps_satellites.py
-sudo chmod +x /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/gps_satellites.py
-sudo /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh   # manual test — silent exit = success
+ls -la /opt/docker/stacks/telegraf-ntp/
+# Should show symlinks for all four scripts pointing to ~/git/pi-ntp/monitoring/telegraf-ntp/
+
+# To recreate if needed:
+sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/gps_satellites.py /opt/docker/stacks/telegraf-ntp/gps_satellites.py
+sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/push_gps_satellites.sh /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh
+sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/chrony_clients.sh /opt/docker/stacks/telegraf-ntp/chrony_clients.sh
+sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/push_chrony_clients.sh /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh
+
+# Manual test — silent exit = success
+sudo /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh
 ```
 
 ---
@@ -239,8 +249,8 @@ sudo chronyc clients
 docker logs telegraf --tail 20
 
 # Check cron output
-sudo grep chrony /var/log/syslog | tail -10
-sudo grep gps /var/log/syslog | tail -10
+sudo journalctl -u cron | grep gps | tail -10
+sudo journalctl -u cron | grep chrony | tail -10
 
 # Manually test the push scripts (silent exit = success)
 sudo /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh
