@@ -1,6 +1,6 @@
 services:
   telegraf:
-    image: telegraf:latest
+    image: telegraf:1.38.4
     container_name: telegraf
     restart: unless-stopped
     # network_mode: host is required so Telegraf can reach chronyd
