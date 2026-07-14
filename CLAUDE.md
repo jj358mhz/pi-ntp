@@ -181,6 +181,9 @@ sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/push_gps_satellites.sh /
 sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/chrony_clients.sh /opt/docker/stacks/telegraf-ntp/chrony_clients.sh
 sudo ln -sf /home/pi/git/pi-ntp/monitoring/telegraf-ntp/push_chrony_clients.sh /opt/docker/stacks/telegraf-ntp/push_chrony_clients.sh
 
+# Ensure scripts are executable
+chmod +x /home/pi/git/pi-ntp/monitoring/telegraf-ntp/*.sh /home/pi/git/pi-ntp/monitoring/telegraf-ntp/*.py
+
 # Manual test — silent exit = success
 sudo /opt/docker/stacks/telegraf-ntp/push_gps_satellites.sh
 ```
