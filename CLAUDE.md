@@ -79,7 +79,7 @@ Written by the cron scripts on `raspberrypi-ntp`:
 |------------------|----------------------|--------------------------------------------------------------------------------------|
 | `chrony_clients` | `chronyc -n clients` | `ntp_requests`, `ntp_drops`, `ntp_poll`, `last_rx`                                   |
 | `gps_sky`        | gpsd SKY message     | `nSat`, `uSat`, `hdop`, `gdop`, `tdop`, `pdop`                                       |
-| `gps_satellites` | gpsd SKY message     | per-satellite: `ss`, `el`, `az`, `used`, `health` (tagged by `prn`, `constellation`) |
+| `gps_satellites` | gpsd SKY message     | per-satellite: `ss`, `el`, `az`, `health` (tagged by `prn`, `constellation`, `used`) |
 | `gps_tpv`        | gpsd TPV message     | `mode` (0/1=no fix, 2=2D, 3=3D), `ept`, `epx`, `epy`, `epv`                          |
 
 **Note on `gps_tpv.ept`:** this receiver appears to report a flat, unchanging value (~0.005s)

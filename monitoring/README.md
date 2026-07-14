@@ -361,10 +361,9 @@ emitted.
 | `ss`     | dB-Hz   | Signal strength                  |
 | `el`     | degrees | Elevation angle                  |
 | `az`     | degrees | Azimuth                          |
-| `used`   | 0/1     | Whether satellite is used in fix |
 | `health` | integer | Satellite health (1=healthy)     |
 
-Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo/BeiDou/SBAS/QZSS)
+Tags: `host`, `prn` (satellite PRN number), `constellation` (GPS/GLONASS/Galileo/BeiDou/SBAS/QZSS), `used` (true/false — whether satellite is used in fix)
 
 ### `gps_tpv` measurement (fix status)
 
