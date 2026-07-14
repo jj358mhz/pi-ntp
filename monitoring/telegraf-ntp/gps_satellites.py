@@ -50,7 +50,7 @@ def parse_sky(data, host, ts):
             continue
 
         print(f"gps_satellites,host={host},prn={prn},constellation={constellation} "
-              f"ss={ss},el={el},az={az},used={used}i,health={health}i {ts}")
+              f"ss={ss},el={el},az={az},used={used},health={health}i {ts}")
 
 
 def parse_tpv(data, host, ts):
