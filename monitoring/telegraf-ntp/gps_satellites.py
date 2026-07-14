@@ -49,8 +49,8 @@ def parse_sky(data, host, ts):
         if ss <= 0 and not used:
             continue
 
-        print(f"gps_satellites,host={host},prn={prn},constellation={constellation} "
-              f"ss={ss},el={el},az={az},used={used},health={health}i {ts}")
+        print(f"gps_satellites,host={host},prn={prn},constellation={constellation},used={used} "
+              f"ss={ss},el={el},az={az},health={health}i {ts}")
 
 
 def parse_tpv(data, host, ts):
