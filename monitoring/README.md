@@ -52,6 +52,67 @@ raspberrypi-utility (192.168.1.248)
 
 ---
 
+## Host Baseline (raspberrypi-utility)
+
+The monitoring stack is memory-sensitive — InfluxDB, Grafana, cAdvisor,
+node-exporter, and Portainer all run concurrently on a 4 GB Pi. The following
+host-level tuning is required to keep the stack stable under load and to give
+cAdvisor the accounting data it reports on.
+
+### cgroup memory accounting
+
+Required for cAdvisor to report per-container memory and for Docker to enforce
+`mem_limit` directives. Off by default on Raspberry Pi OS.
+
+```bash
+# Verify
+grep -o 'cgroup_enable=memory cgroup_memory=1' /boot/cmdline.txt
+docker info 2>&1 | grep -i "memory limit\|warning"
+```
+
+If missing, append `cgroup_enable=memory cgroup_memory=1` to the **single line**
+in `/boot/cmdline.txt` — the kernel cmdline must remain one line, or the params
+are silently ignored — and reboot.
+
+### Swap sized to 2 GiB
+
+Raspberry Pi OS ships with a 100 MB swap file, which is insufficient headroom
+when the monitoring stack is co-resident with Caddy, Authentik, and Portainer
+(see `homelab-auth` for the auth stack).
+
+```bash
+# Verify
+free -h
+grep CONF_SWAPSIZE /etc/dphys-swapfile
+```
+
+If `CONF_SWAPSIZE=100`, resize (no reboot needed):
+
+```bash
+sudo dphys-swapfile swapoff
+sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+```
+
+### Docker build cache hygiene
+
+Portainer stack redeploys leave orphaned build cache behind — several GB can
+accumulate over a few months of Authentik/Grafana image bumps. Check
+periodically and prune:
+
+```bash
+docker system df
+docker builder prune -af    # if build cache is non-trivial
+docker container prune -f   # sweep stopped containers
+```
+
+Do **not** run `docker system prune --volumes` — the monitoring stack's data
+volumes (`influxdb-data`, `grafana-data`) are active, and pruning them destroys
+the InfluxDB `ntp` bucket contents.
+
+---
+
 ## Deployment
 
 ### Step 1 — Generate InfluxDB token
@@ -417,6 +478,10 @@ and `gps_sky.tdop` are the fields that reflect genuine, live fix quality.
   int ÷ float the way `aggregateWindow(fn: mean)` does
 - RTC battery voltage uses a slower 60s poll interval than CPU temp (10s) since it changes
   much more slowly — no alert thresholds are set yet pending a baseline observation period
+- The `ntp` bucket is created with infinite retention by default. At current write
+  rates it grows ~50–100 MB/month; setting an explicit cap (90 days or 1 year) via
+  **Load Data → Buckets → ntp → Settings** in the InfluxDB UI is optional but
+  recommended to prevent unbounded growth over multi-year timescales
 - The UniFi ZBF rule `Allow_NTP_to_InfluxDB` permits TCP 8086 from `LAN-NTP`
   zone to `192.168.1.248`
 - Both `push_chrony_clients.sh` and `push_gps_satellites.sh` source `.env` for `INFLUXDB_TOKEN`
