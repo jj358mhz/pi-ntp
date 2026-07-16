@@ -156,6 +156,17 @@ volume. Changing them later won't rotate anything on an already-initialized inst
 `GF_AUTH_OAUTH_AUTO_LOGIN=true`) — `GRAFANA_PASSWORD` is a break-glass fallback only, not used
 day-to-day. See `CLAUDE.md` → Authentication for the full OIDC config and break-glass steps.
 
+**Bucket retention:** the `ntp` bucket is created with infinite retention. Immediately
+after first boot, cap it at 1 year so the new instance doesn't quietly grow unbounded:
+
+```bash
+NTP_BUCKET_ID=$(docker exec influxdb influx bucket list | awk '$2=="ntp"{print $1}')
+docker exec influxdb influx bucket update --id "$NTP_BUCKET_ID" --retention 8760h
+docker exec influxdb influx bucket list   # verify: ntp row shows 8760h0m0s
+```
+
+See the retention bullet under Notes for context on shard boundaries and sizing.
+
 ### Step 3 — Create Telegraf config on `raspberrypi-ntp`
 
 ```bash
@@ -478,10 +489,11 @@ and `gps_sky.tdop` are the fields that reflect genuine, live fix quality.
   int ÷ float the way `aggregateWindow(fn: mean)` does
 - RTC battery voltage uses a slower 60s poll interval than CPU temp (10s) since it changes
   much more slowly — no alert thresholds are set yet pending a baseline observation period
-- The `ntp` bucket is created with infinite retention by default. At current write
-  rates it grows ~50–100 MB/month; setting an explicit cap (90 days or 1 year) via
-  **Load Data → Buckets → ntp → Settings** in the InfluxDB UI is optional but
-  recommended to prevent unbounded growth over multi-year timescales
+- The `ntp` bucket is capped at 1 year retention (8760h). Set via
+  `docker exec influxdb influx bucket update --id <ntp-bucket-id> --retention 8760h`
+  — find the ID with `docker exec influxdb influx bucket list`. Data older than
+  the window drops off at shard boundaries (168h shards), not instantly.
+  Current write rate ~50–100 MB/month, so annual footprint stays well under 1.5 GB
 - The UniFi ZBF rule `Allow_NTP_to_InfluxDB` permits TCP 8086 from `LAN-NTP`
   zone to `192.168.1.248`
 - Both `push_chrony_clients.sh` and `push_gps_satellites.sh` source `.env` for `INFLUXDB_TOKEN`
