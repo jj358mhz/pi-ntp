@@ -1,5 +1,7 @@
 # raspberrypi-ntp
 
+[![Release](https://img.shields.io/github/v/release/jj358mhz/pi-ntp?sort=semver)](https://github.com/jj358mhz/pi-ntp/releases/latest)
+
 A GPS-disciplined, stratum 1 NTP server built on a Raspberry Pi 5 running Debian Bookworm.
 Uses a Waveshare NEO-M8T GNSS Timing HAT connected via UART, with a PPS signal on GPIO 18,
 feeding [chrony](https://chrony-project.org/) for sub-microsecond time accuracy on the local network.
