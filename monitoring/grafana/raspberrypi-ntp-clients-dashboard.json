@@ -3,7 +3,7 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "raspberrypi-ntp-clients-v2",
-    "generation": 33,
+    "generation": 35,
     "creationTimestamp": "2026-06-08T01:00:26Z",
     "labels": {},
     "annotations": {}
@@ -474,51 +474,56 @@
           },
           "vizConfig": {
             "kind": "VizConfig",
-            "group": "piechart",
+            "group": "bargauge",
             "version": "13.1.0",
             "spec": {
               "options": {
-                "displayLabels": [
-                  "percent",
-                  "value"
-                ],
+                "displayMode": "gradient",
                 "legend": {
-                  "calcs": [
-                    "sum"
-                  ],
-                  "displayMode": "table",
+                  "calcs": [],
+                  "displayMode": "list",
                   "overflow": "ellipsis",
                   "placement": "bottom",
-                  "showLegend": true
+                  "showLegend": false
                 },
-                "pieType": "donut",
+                "maxVizHeight": 300,
+                "minVizHeight": 16,
+                "minVizWidth": 8,
+                "namePlacement": "auto",
+                "orientation": "horizontal",
                 "reduceOptions": {
                   "calcs": [
                     "lastNotNull"
                   ],
-                  "fields": "/.*/",
+                  "fields": "",
                   "values": false
                 },
-                "sort": "desc",
-                "tooltip": {
-                  "hideZeros": false,
-                  "mode": "single",
-                  "sort": "none"
-                }
+                "showUnfilled": true,
+                "sizing": "auto",
+                "valueMode": "color"
               },
               "fieldConfig": {
                 "defaults": {
                   "unit": "short",
-                  "color": {
-                    "mode": "palette-classic",
-                    "fixedColor": "#73BF69"
+                  "thresholds": {
+                    "mode": "percentage",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 60,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
                   },
-                  "custom": {
-                    "hideFrom": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": false
-                    }
+                  "color": {
+                    "mode": "continuous-BlYlRd"
                   }
                 },
                 "overrides": [
@@ -996,7 +1001,7 @@
                     "mode": "absolute",
                     "steps": [
                       {
-                        "value": null,
+                        "value": 0,
                         "color": "green"
                       },
                       {
@@ -1225,6 +1230,19 @@
                       "spec": {
                         "x": 4,
                         "y": 0,
+                        "width": 20,
+                        "height": 12,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-5"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 4,
                         "width": 4,
                         "height": 4,
                         "element": {
@@ -1236,26 +1254,13 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 8,
-                        "y": 0,
+                        "x": 0,
+                        "y": 8,
                         "width": 4,
                         "height": 4,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-4"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 12,
-                        "y": 0,
-                        "width": 12,
-                        "height": 11,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-5"
                         }
                       }
                     }
