@@ -63,7 +63,9 @@ def parse_tpv(data, host, ts):
     lat  = data.get('lat', 0.0)    # latitude, decimal degrees
     lon  = data.get('lon', 0.0)    # longitude, decimal degrees
     alt  = data.get('altMSL', 0.0) # altitude above mean sea level, meters
-    print(f"gps_tpv,host={host} mode={mode}i,ept={ept},epx={epx},epy={epy},epv={epv},lat={lat},lon={lon},alt={alt} {ts}")
+    eph = data.get('eph', 0.0)   # estimated horizontal position error, meters
+    sep = data.get('sep', 0.0)   # estimated spherical (3D) position error, meters
+    print(f"gps_tpv,host={host} mode={mode}i,ept={ept},epx={epx},epy={epy},epv={epv},lat={lat},lon={lon},alt={alt},eph={eph},sep={sep} {ts}")
 
 
 def main():
