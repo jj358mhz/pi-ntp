@@ -3,7 +3,7 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "raspberrypi-ntp-gps-constellation",
-    "generation": 42,
+    "generation": 57,
     "creationTimestamp": "2026-06-14T03:46:42Z",
     "labels": {},
     "annotations": {}
@@ -17,10 +17,7 @@
             "kind": "DataQuery",
             "group": "grafana",
             "version": "v0",
-            "spec": {},
-            "labels": {
-              "grafana.app/export-label": "grafana-1"
-            }
+            "spec": {}
           },
           "enable": true,
           "hide": true,
@@ -303,7 +300,7 @@
                       "group": "influxdb",
                       "version": "v0",
                       "spec": {
-                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"ss\" or r._field == \"el\" or r._field == \"az\" or r._field == \"used\")\n  |> last()\n  |> group(columns: [\"prn\", \"constellation\", \"_field\"])\n  |> pivot(rowKey: [\"prn\", \"constellation\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> map(fn: (r) => ({\n      r with\n      wiki_url: if r.constellation == \"GPS\" then \"https://en.wikipedia.org/wiki/List_of_GPS_satellites\"\n                else if r.constellation == \"GLONASS\" then \"https://en.wikipedia.org/wiki/List_of_GLONASS_satellites\"\n                else \"https://en.wikipedia.org/wiki/GNSS\"\n  }))\n  |> keep(columns: [\"prn\", \"used\", \"constellation\", \"ss\", \"el\", \"az\", \"wiki_url\"])\n  |> sort(columns: [\"ss\"], desc: true)"
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_satellites\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"ss\" or r._field == \"el\" or r._field == \"az\" or r._field == \"used\")\n  |> last()\n  |> group(columns: [\"prn\", \"constellation\", \"_field\"])\n  |> pivot(rowKey: [\"prn\", \"constellation\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n  |> group()\n  |> map(fn: (r) => ({r with wiki_url: if r.constellation == \"GPS\" then \"https://en.wikipedia.org/wiki/List_of_GPS_satellites\" else if r.constellation == \"GLONASS\" then \"https://en.wikipedia.org/wiki/List_of_GLONASS_satellites\" else \"https://en.wikipedia.org/wiki/GNSS\"}))\n  |> keep(columns: [\"prn\", \"used\", \"constellation\", \"ss\", \"el\", \"az\", \"wiki_url\"])\n  |> sort(columns: [\"ss\"], desc: true)"
                       },
                       "labels": {
                         "grafana.app/export-label": "influxdb-1",
@@ -513,7 +510,7 @@
         "spec": {
           "id": 12,
           "title": "Fix Status",
-          "description": "Current GPS fix mode. 3D fix is required for reliable PPS timing discipline — a drop to 2D or No Fix is the earliest warning sign of degraded stratum-1 accuracy.",
+          "description": "Current GPS fix mode. 3D fix is required for reliable PPS timing discipline.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -627,7 +624,7 @@
         "spec": {
           "id": 13,
           "title": "GPS Time Error Estimate (ept)",
-          "description": "gpsd's own estimated timestamp error, in seconds. A rising trend indicates the GPS receiver's raw time solution is degrading — worth comparing against chrony's PPS-disciplined offset, since PPS should correct for most of this.",
+          "description": "gpsd's estimated timestamp error in seconds. A rising trend indicates degrading GPS time solution.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -756,7 +753,7 @@
         "spec": {
           "id": 14,
           "title": "CPU Temperature (°C)",
-          "description": "Raw cpu_temp values are millidegrees; this panel divides by 1000.\nAlert thresholds: warning ≥70°C, critical ≥80°C (see Alerting in monitoring/README.md)",
+          "description": "Raw cpu_temp values are millidegrees; this panel divides by 1000.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -870,6 +867,438 @@
                     "thresholdsStyle": {
                       "mode": "dashed"
                     }
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-15": {
+        "kind": "Panel",
+        "spec": {
+          "id": 15,
+          "title": "Latitude",
+          "description": "GPS-derived latitude. Updates every minute from gpsd TPV message.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_tpv\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"lat\")\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\"])"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "displayName": "",
+                  "unit": "degree",
+                  "decimals": 6,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "blue"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-16": {
+        "kind": "Panel",
+        "spec": {
+          "id": 16,
+          "title": "Longitude",
+          "description": "GPS-derived longitude. Updates every minute from gpsd TPV message.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_tpv\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"lon\")\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\"])"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "displayName": "",
+                  "unit": "degree",
+                  "decimals": 6,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "blue"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-17": {
+        "kind": "Panel",
+        "spec": {
+          "id": 17,
+          "title": "Altitude (MSL)",
+          "description": "GPS-derived altitude above mean sea level, in feet. Updates every minute from gpsd TPV message.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_tpv\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"alt\")\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> map(fn: (r) => ({r with _value: r._value * 3.28084}))"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "colorMode": "background",
+                "graphMode": "none",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "displayName": "",
+                  "unit": "lengthft",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "blue"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "fixed",
+                    "fixedColor": "blue"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-18": {
+        "kind": "Panel",
+        "spec": {
+          "id": 18,
+          "title": "Horiz. Position Error (eph)",
+          "description": "Estimated horizontal position error in feet (1-sigma). A rising value before a fix loss is an early warning of degrading GPS geometry.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_tpv\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"eph\")\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> map(fn: (r) => ({r with _value: r._value * 3.28084}))"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "colorMode": "background",
+                "graphMode": "area",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "displayName": "",
+                  "unit": "lengthft",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 10,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 20,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 30,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-19": {
+        "kind": "Panel",
+        "spec": {
+          "id": 19,
+          "title": "3D Position Error (sep)",
+          "description": "Estimated spherical (3D) position error in feet (1-sigma). A combined indicator of overall fix quality.",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "influxdb",
+                      "version": "v0",
+                      "spec": {
+                        "query": "from(bucket: \"ntp\")\n  |> range(start: -5m)\n  |> filter(fn: (r) => r._measurement == \"gps_tpv\" and r.host == \"raspberrypi-ntp\")\n  |> filter(fn: (r) => r._field == \"sep\")\n  |> last()\n  |> keep(columns: [\"_time\", \"_value\"])\n  |> map(fn: (r) => ({r with _value: r._value * 3.28084}))"
+                      },
+                      "labels": {
+                        "grafana.app/export-label": "influxdb-1",
+                        "grafana.app/export-datasource-name": "influxdb"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "stat",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "colorMode": "background",
+                "graphMode": "area",
+                "justifyMode": "center",
+                "orientation": "auto",
+                "percentChangeColorMode": "standard",
+                "reduceOptions": {
+                  "calcs": [
+                    "lastNotNull"
+                  ],
+                  "fields": "",
+                  "values": false
+                },
+                "showPercentChange": false,
+                "textMode": "auto",
+                "wideLayout": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "displayName": "",
+                  "unit": "lengthft",
+                  "decimals": 1,
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 200,
+                        "color": "yellow"
+                      },
+                      {
+                        "value": 400,
+                        "color": "orange"
+                      },
+                      {
+                        "value": 600,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "color": {
+                    "mode": "thresholds"
                   }
                 },
                 "overrides": []
@@ -1318,7 +1747,7 @@
         "spec": {
           "id": 7,
           "title": "Satellites Visible (nSat) vs Used (uSat)",
-          "description": "nSat = satellites visible (signal detected); uSat = satellites actually used in the fix. A persistent large gap (e.g. nSat≫uSat) suggests antenna/multipath issues; uSat alone drives GPS timing accuracy.",
+          "description": "nSat = satellites visible (signal detected); uSat = satellites actually used in the fix.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1608,7 +2037,7 @@
         "spec": {
           "id": 9,
           "title": "DOP Values Over Time",
-          "description": "Four Dilution of Precision metrics plotted together: HDOP (horizontal), TDOP (time), GDOP (geometric), PDOP (position). All are unitless multipliers describing how much your satellite geometry amplifies measurement error — lower is better, with values under ~2 considered good and above ~5 indicating poor sky geometry (e.g. obstructions, very few satellites). TDOP specifically tracks timing accuracy and is the one most relevant to this server's role as an NTP source.",
+          "description": "HDOP, TDOP, GDOP, PDOP over time. Lower is better; under ~2 is good, above ~5 indicates poor sky geometry.",
           "links": [],
           "data": {
             "kind": "QueryGroup",
@@ -1784,7 +2213,7 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 12,
+                        "x": 11,
                         "y": 0,
                         "width": 3,
                         "height": 4,
@@ -1797,7 +2226,7 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 15,
+                        "x": 14,
                         "y": 0,
                         "width": 3,
                         "height": 4,
@@ -1810,7 +2239,7 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 18,
+                        "x": 17,
                         "y": 0,
                         "width": 3,
                         "height": 4,
@@ -1823,13 +2252,78 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 21,
+                        "x": 20,
                         "y": 0,
-                        "width": 3,
+                        "width": 4,
                         "height": 4,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-6"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 4,
+                        "width": 8,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-15"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 8,
+                        "y": 4,
+                        "width": 8,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-16"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 16,
+                        "y": 4,
+                        "width": 8,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-17"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 8,
+                        "width": 12,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-18"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 12,
+                        "y": 8,
+                        "width": 12,
+                        "height": 4,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-19"
                         }
                       }
                     }
