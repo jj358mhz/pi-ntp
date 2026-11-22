@@ -295,8 +295,8 @@ CPU temperature on `raspberrypi-ntp` is monitored by two Grafana alert rules, ro
 | Warning (70°C)  | `last() > 70` | 2m                       | warning  |
 | Critical (80°C) | `last() > 80` | None (fires immediately) | critical |
 
-- **Folder:** `Raspberry Pi Monitoring`
-- **Evaluation group:** `pi-temp-checks`, evaluated every 2m
+- **Folder:** `NTP Pi Monitoring`
+- **Evaluation group:** `ntp-temp-checks`, evaluated every 2m
 - **Data source:** InfluxDB (`efodpma1sz474d`), bucket `ntp`, measurement `cpu_temp`
 - **Contact point:** Slack app `Grafana Alerts` → `#grafana-alerts`, via incoming webhook
 - **Labels:** `host=raspberrypi-ntp`, `severity={warning|critical}`, `alertname=CPUTempHigh`
@@ -316,13 +316,33 @@ in Flux's alert evaluator. The fix is an explicit cast:
 |------------------|------------------|----------------|----------|
 | GPS Fix Degraded | `last(mode) < 3` | 5m             | critical |
 
-- **Folder:** `Raspberry Pi Monitoring`
+- **Folder:** `NTP Pi Monitoring`
 - **Evaluation group:** `gps-health`, evaluated every 1m (matches the cron push rate)
 - **Data source:** InfluxDB (`efodpma1sz474d`), bucket `ntp`, measurement `gps_tpv`, field `mode`
 - **Contact point:** same Slack contact point as the CPU temp alerts
 - 5-minute pending period is intentional — a momentary dip to 2D fix from a brief obstruction
   shouldn't page; only a sustained loss of 3D fix should. This is the earliest available signal
   that PPS timing discipline may be degrading, ahead of any visible change in chrony's own offset.
+
+### NTP service
+
+Six VLANs are DNAT'd to this server for NTP (see
+[homelab-network#13](https://github.com/jj358mhz/homelab-network/issues/13)), so an outage
+affects the whole network's clocks. These rules query **Prometheus** (node-exporter on
+`192.168.123.123:9100`), not InfluxDB, so they still fire when the Pi itself is down and stops
+pushing to InfluxDB.
+
+| Rule                    | Condition                         | Pending | No data  | Severity |
+|-------------------------|-----------------------------------|---------|----------|----------|
+| NTP Pi — Down           | `up < 1`                          | 5m      | Alerting | critical |
+| NTP Pi — Clock Unsynced | `node_timex_sync_status < 1`      | 15m     | No data  | warning  |
+
+- **Folder:** `NTP Pi Monitoring`
+- **Evaluation group:** `ntp-service`, evaluated every 1m
+- **Data source:** Prometheus (`ffqo8cip9n0n4b`)
+- **Contact point:** same Slack contact point as the CPU temp alerts
+- "No data → Alerting" on the Down rule makes a vanished series (for example, a removed scrape
+  target) alert instead of passing silently.
 
 No alert rules exist yet for `rtc_battery_voltage` — pending a baseline observation period (see
 below).
