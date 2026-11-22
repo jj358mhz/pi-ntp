@@ -147,6 +147,14 @@ Current alert rules:
   for a sustained 5 minutes. Evaluation group `gps-health`, 1m interval (matches the cron push rate).
   Routed to Slack. This is the earliest available warning that PPS timing discipline may be
   degrading, ahead of any visible change in chrony's own offset.
+- **NTP Pi Temp — Warning (70°C) / Critical (80°C)** — InfluxDB `cpu_temp`, group
+  `ntp-temp-checks`, 2m interval.
+- **NTP Pi — Down** / **NTP Pi — Clock Unsynced** — Prometheus `up` / `node_timex_sync_status`
+  for `192.168.123.123:9100`, group `ntp-service`, 1m interval. Prometheus-based so they fire even
+  when the Pi can't push to InfluxDB. Down alerts on no data too.
+
+All rules are in the `NTP Pi Monitoring` folder. Export that folder only. Fleet-wide and Caddy
+rules live in `homelab-utility/monitoring/alerts/`.
 
 ### Cron scripts
 

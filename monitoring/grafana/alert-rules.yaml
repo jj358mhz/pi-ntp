@@ -2,7 +2,7 @@ apiVersion: 1
 groups:
     - orgId: 1
       name: gps-health
-      folder: Raspberry Pi Monitoring
+      folder: NTP Pi Monitoring
       interval: 1m
       rules:
         - uid: bfqgpz95b124ge
@@ -86,12 +86,135 @@ groups:
           notification_settings:
             receiver: pi-slack-alerts
     - orgId: 1
-      name: pi-temp-checks
-      folder: Raspberry Pi Monitoring
+      name: ntp-service
+      folder: NTP Pi Monitoring
+      interval: 1m
+      rules:
+        - uid: eg50sojpzkutcb
+          title: NTP Pi — Down
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: ffqo8cip9n0n4b
+              model:
+                datasource:
+                    type: prometheus
+                    uid: ffqo8cip9n0n4b
+                editorMode: code
+                expr: up{instance="192.168.123.123:9100"}
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 1
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: Alerting
+          execErrState: Error
+          for: 5m
+          annotations:
+            summary: raspberrypi-ntp (192.168.123.123) is unreachable from Prometheus. Six VLANs are DNAT'd to it for NTP (homelab-network#13); clocks will drift until it's back.
+          labels:
+            alertname: NTPServerDown
+            host: raspberrypi-ntp
+            severity: critical
+          isPaused: false
+          notification_settings:
+            receiver: pi-slack-alerts
+        - uid: cg50sojzrojk0c
+          title: NTP Pi — Clock Unsynced
+          condition: C
+          data:
+            - refId: A
+              relativeTimeRange:
+                from: 600
+                to: 0
+              datasourceUid: ffqo8cip9n0n4b
+              model:
+                datasource:
+                    type: prometheus
+                    uid: ffqo8cip9n0n4b
+                editorMode: code
+                expr: node_timex_sync_status{instance="192.168.123.123:9100"}
+                instant: true
+                intervalMs: 1000
+                legendFormat: __auto
+                maxDataPoints: 43200
+                range: false
+                refId: A
+            - refId: C
+              queryType: expression
+              datasourceUid: __expr__
+              model:
+                conditions:
+                    - evaluator:
+                        params:
+                            - 1
+                        type: lt
+                      operator:
+                        type: and
+                      query:
+                        params:
+                            - C
+                      reducer:
+                        params: []
+                        type: last
+                      type: query
+                datasource:
+                    type: __expr__
+                    uid: __expr__
+                expression: A
+                intervalMs: 1000
+                maxDataPoints: 43200
+                refId: C
+                type: threshold
+          noDataState: NoData
+          execErrState: Error
+          for: 15m
+          annotations:
+            summary: raspberrypi-ntp kernel clock reports unsynchronised for 15m. Check chrony sources (GPS/PPS) with `chronyc sources`.
+          labels:
+            alertname: NTPClockUnsynced
+            host: raspberrypi-ntp
+            severity: warning
+          isPaused: false
+          notification_settings:
+            receiver: pi-slack-alerts
+    - orgId: 1
+      name: ntp-temp-checks
+      folder: NTP Pi Monitoring
       interval: 2m
       rules:
         - uid: afpncysbsdatcf
-          title: Alert Rule 1 — Warning (70°C)
+          title: NTP Pi Temp — Warning (70°C)
           condition: C
           data:
             - refId: A
@@ -172,7 +295,7 @@ groups:
           notification_settings:
             receiver: pi-slack-alerts
         - uid: bfpndhzixvthce
-          title: Alert Rule 2 — Critical (80°C)
+          title: NTP Pi Temp — Critical (80°C)
           condition: C
           data:
             - refId: A
